@@ -1,0 +1,83 @@
+name: Construir e publicar
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Gerar o index.html e o mapa
+        run: node _source/build.mjs
+
+      - name: O index.html gerado tem de ser igual ao que está no repositório
+        run: |
+          if ! git diff --quiet -- index.html assets/mapa.svg; then
+            echo "::error::index.html ou assets/mapa.svg estão desactualizados."
+            echo "Correr 'node _source/build.mjs' e fazer commit do resultado."
+            git diff --stat -- index.html assets/mapa.svg
+            exit 1
+          fi
+
+      - name: Todas as ligações externas têm de responder
+        run: |
+          falhou=0
+          # o canonical aponta para esta própria página: no primeiro deploy ainda não
+          # existe, por isso fica de fora da verificação
+          proprio=$(grep -oE 'rel="canonical" href="[^"]+"' index.html \
+                    | sed 's/.*href="//; s/"$//')
+          urls=$(grep -oE 'href="https://[^"]+"' index.html \
+                 | sed 's/href="//; s/"$//' | sort -u \
+                 | grep -Fxv "$proprio" || true)
+          for u in $urls; do
+            código=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 25 \
+                     --retry 2 -A 'Mozilla/5.0 (compatible; portfolio-ci)' "$u" || echo 000)
+            if [ "$código" != "200" ]; then
+              echo "::error::$u devolveu $código"
+              falhou=1
+            else
+              echo "ok   $código  $u"
+            fi
+          done
+          exit $falhou
+
+      - name: Nenhum ficheiro do sítio pode faltar
+        run: |
+          falhou=0
+          for f in $(grep -oE '(src|href)="(assets|data)/[^"]+"' index.html \
+                     | sed 's/.*="//; s/"$//' | sort -u); do
+            [ -f "$f" ] || { echo "::error::falta $f"; falhou=1; }
+          done
+          exit $falhou
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  publicar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacao.outputs.page_url }}
+    steps:
+      - id: publicacao
+        uses: actions/deploy-pages@v4

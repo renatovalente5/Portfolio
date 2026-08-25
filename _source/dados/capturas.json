@@ -1,0 +1,434 @@
+{
+ "amma-creative": {
+  "desktop": [
+   [
+    480,
+    12792
+   ],
+   [
+    720,
+    21480
+   ],
+   [
+    1080,
+    35040
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    18510
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "armazem-dos-pneus": {
+  "desktop": [
+   [
+    480,
+    18174
+   ],
+   [
+    720,
+    29396
+   ],
+   [
+    1080,
+    48180
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    27086
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "artstampcreations": {
+  "desktop": [
+   [
+    480,
+    15348
+   ],
+   [
+    720,
+    26726
+   ],
+   [
+    1080,
+    46312
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    28238
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "feira-norte-auto": {
+  "desktop": [
+   [
+    480,
+    10830
+   ],
+   [
+    720,
+    17602
+   ],
+   [
+    1080,
+    28658
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    18686
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "gold-cleaning": {
+  "desktop": [
+   [
+    480,
+    9394
+   ],
+   [
+    720,
+    15548
+   ],
+   [
+    1080,
+    25504
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    18376
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "hn-transportes": {
+  "desktop": [
+   [
+    480,
+    12598
+   ],
+   [
+    720,
+    20564
+   ],
+   [
+    1080,
+    33354
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    21922
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "hv-limpezas": {
+  "desktop": [
+   [
+    480,
+    12462
+   ],
+   [
+    720,
+    19742
+   ],
+   [
+    1080,
+    31388
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    16306
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "lr-motors": {
+  "desktop": [
+   [
+    480,
+    13346
+   ],
+   [
+    720,
+    22930
+   ],
+   [
+    1080,
+    38724
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    23554
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "marmovar": {
+  "desktop": [
+   [
+    480,
+    17446
+   ],
+   [
+    720,
+    27936
+   ],
+   [
+    1080,
+    44890
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    23004
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "menta-conecta": {
+  "desktop": [
+   [
+    480,
+    15676
+   ],
+   [
+    720,
+    25300
+   ],
+   [
+    1080,
+    41140
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    21816
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "newauto": {
+  "desktop": [
+   [
+    480,
+    8110
+   ],
+   [
+    720,
+    12946
+   ],
+   [
+    1080,
+    20288
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    18760
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "pau-ferro-atelier": {
+  "desktop": [
+   [
+    480,
+    15652
+   ],
+   [
+    720,
+    27686
+   ],
+   [
+    1080,
+    50848
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    22352
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "perfect-finish": {
+  "desktop": [
+   [
+    480,
+    11720
+   ],
+   [
+    720,
+    18982
+   ],
+   [
+    1080,
+    31078
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    14482
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "pokeauto": {
+  "desktop": [
+   [
+    480,
+    10212
+   ],
+   [
+    720,
+    15996
+   ],
+   [
+    1080,
+    25482
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    16748
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "praiometro": {
+  "desktop": [
+   [
+    480,
+    5186
+   ],
+   [
+    720,
+    8812
+   ],
+   [
+    1080,
+    15124
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    13580
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "raf-matos": {
+  "desktop": [
+   [
+    480,
+    11284
+   ],
+   [
+    720,
+    17792
+   ],
+   [
+    1080,
+    27426
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    18604
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "spa-do-automovel-lux": {
+  "desktop": [
+   [
+    480,
+    11128
+   ],
+   [
+    720,
+    18330
+   ],
+   [
+    1080,
+    29540
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    19616
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ },
+ "weldstaff": {
+  "desktop": [
+   [
+    480,
+    8412
+   ],
+   [
+    720,
+    12598
+   ],
+   [
+    1080,
+    19380
+   ]
+  ],
+  "telefone": [
+   [
+    300,
+    10524
+   ]
+  ],
+  "racio_telefone": 0.4621,
+  "capturado_em": "2026-08-25"
+ }
+}

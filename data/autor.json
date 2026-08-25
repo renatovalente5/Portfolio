@@ -1,0 +1,20 @@
+{
+ "nome": "Renato Valente",
+ "papel": "Faço sites para empresas portuguesas",
+
+ "_nota": "Os campos a null estão em falta. O gerador NÃO inventa contactos: enquanto estiverem a null, os botões de telefone/WhatsApp/email e o bloco de preço não são escritos no HTML, e o build avisa. Preencher e correr `node _source/build.mjs` outra vez.",
+
+ "telefone": null,
+ "telefone_display": null,
+ "whatsapp": null,
+ "email": null,
+
+ "preco_desde": null,
+ "prazo_semanas": null,
+
+ "nif": null,
+ "morada": null,
+
+ "linkedin": null,
+ "github": "https://github.com/renatovalente5"
+}
