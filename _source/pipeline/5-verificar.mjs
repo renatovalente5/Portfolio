@@ -4,7 +4,7 @@
 import { spawn } from 'node:child_process'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, readFileSync, mkdirSync } from 'node:fs'
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
@@ -28,6 +28,44 @@ function rpc (ws, method, params = {}, sessionId) {
   })
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+/** Bandas de 400px cujo desvio-padrão de luminância é quase nulo: nada foi pintado.
+ *  Lê o PNG com o Chrome, para não precisar de bibliotecas de imagem. */
+async function bandasPlanas (ficheiro) {
+  const { targetId } = await rpc(GLOBAL.ws, 'Target.createTarget', { url: 'about:blank' })
+  const { sessionId: S } = await rpc(GLOBAL.ws, 'Target.attachToTarget', { targetId, flatten: true })
+  try {
+    await rpc(GLOBAL.ws, 'Runtime.enable', {}, S)
+    const dados = readFileSync(ficheiro).toString('base64')
+    const r = await rpc(GLOBAL.ws, 'Runtime.evaluate', {
+      expression: `(async()=>{
+        const im = new Image();
+        im.src = 'data:image/png;base64,${dados}';
+        await im.decode();
+        const H = 400, cv = new OffscreenCanvas(160, H), cx = cv.getContext('2d');
+        const planas = [];
+        for (let y = 0; y + H <= im.height; y += H) {
+          cx.clearRect(0,0,160,H);
+          cx.drawImage(im, 0, y, im.width, H, 0, 0, 160, H);
+          const d = cx.getImageData(0,0,160,H).data;
+          let s = 0, s2 = 0, n = 0;
+          for (let i = 0; i < d.length; i += 64) {
+            const L = .2126*d[i] + .7152*d[i+1] + .0722*d[i+2];
+            s += L; s2 += L*L; n++;
+          }
+          const dp = Math.sqrt(Math.max(0, s2/n - (s/n)**2));
+          if (dp < 4) planas.push(y);
+        }
+        return planas
+      })()`,
+      awaitPromise: true, returnByValue: true,
+    }, S)
+    return r.result.value || []
+  } catch { return [] } finally {
+    await rpc(GLOBAL.ws, 'Target.closeTarget', { targetId }).catch(() => {})
+  }
+}
+const GLOBAL = {}
 
 const DIAG = `(() => {
   const r = {};
@@ -82,6 +120,7 @@ async function main () {
   if (!alvo) { chrome.kill(); throw new Error('Chrome não arrancou') }
   const ws = new WebSocket(alvo.webSocketDebuggerUrl)
   await new Promise(r => ws.addEventListener('open', r, { once: true }))
+  GLOBAL.ws = ws
 
   const CASOS = (process.env.CASOS ? JSON.parse(process.env.CASOS) : [
     { n: '360-claro', w: 360, h: 780, dpr: 3, tema: 'light', mob: true },
@@ -122,13 +161,40 @@ async function main () {
     }, S).catch(() => {})
     await sleep(900)
     const d = (await rpc(ws, 'Runtime.evaluate', { expression: DIAG, returnByValue: true }, S)).result.value
-    // captura da página inteira (limitada, para não estourar a textura)
+    // Captura da página inteira. As fichas têm content-visibility:auto: ao esticar o
+    // ecrã para a altura toda, os cartões ficam «em vista» mas ainda não pintados, e
+    // as imagens lazy só então começam a ser pedidas. Sem forçar um percurso pela
+    // página e esperar pelas descodificações, a captura sai em branco a partir da
+    // grelha — e mente a dizer que está tudo bem.
     const alturaMax = Math.min(d.altura, 16000)
     await rpc(ws, 'Emulation.setDeviceMetricsOverride',
       { width: c.w, height: alturaMax, deviceScaleFactor: 1, mobile: !!c.mob }, S)
-    await sleep(700)
+    await sleep(600)
+    await rpc(ws, 'Runtime.evaluate', {
+      expression: `(async()=>{
+        for (const el of document.querySelectorAll('.ficha')) el.style.contentVisibility='visible';
+        for (const y of [0,.25,.5,.75,1]) { scrollTo(0, document.body.scrollHeight*y); await new Promise(r=>setTimeout(r,120)) }
+        scrollTo(0,0);
+        const imgs=[...document.images];
+        await Promise.all(imgs.map(i => i.complete ? 0 : new Promise(r => { i.onload=i.onerror=r })));
+        await Promise.all(imgs.map(i => i.decode().catch(()=>{})));
+        await document.fonts.ready;
+        return imgs.filter(i => !i.complete || !i.naturalWidth).length
+      })()`,
+      awaitPromise: true, returnByValue: true,
+    }, S).then(r => { if (r.result.value) problemas.push(`${c.n}: ${r.result.value} imagens não carregaram`) })
+      .catch(e => problemas.push(`${c.n}: falhou a preparar a captura (${e.message})`))
+    await sleep(1600)
     const shot = await rpc(ws, 'Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }, S)
-    writeFileSync(join(OUT, `${c.n}.png`), Buffer.from(shot.data, 'base64'))
+    const png = Buffer.from(shot.data, 'base64')
+    writeFileSync(join(OUT, `${c.n}.png`), png)
+    // Guarda contra capturas em branco: uma banda sem variação de luz é uma banda que
+    // não pintou. Aconteceu, passou por boa, e só se viu a olho.
+    const planas = await bandasPlanas(join(OUT, `${c.n}.png`))
+    if (planas.length) {
+      console.log(`   ✗ ${planas.length} bandas sem conteúdo pintado (y=${planas.slice(0,4).join(', ')}…)`)
+      problemas.push(`${c.n}: ${planas.length} bandas em branco na captura`)
+    }
     console.log(`\n── ${c.n}  (${c.w}px, ${c.tema})`)
     console.log(`   altura ${d.altura}px · fichas ${d.fichas_visiveis}/${d.fichas} · imgs ${d.imgs} (sem dim: ${d.imgs_sem_dim})`)
     console.log(`   fonte h1: ${d.fonte_h1}`)
