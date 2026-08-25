@@ -47,13 +47,13 @@ jobs:
                  | sed 's/href="//; s/"$//' | sort -u \
                  | grep -Fxv "$proprio" || true)
           for u in $urls; do
-            código=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 25 \
+            estado=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 25 \
                      --retry 2 -A 'Mozilla/5.0 (compatible; portfolio-ci)' "$u" || echo 000)
-            if [ "$código" != "200" ]; then
-              echo "::error::$u devolveu $código"
+            if [ "$estado" != "200" ]; then
+              echo "::error::$u devolveu $estado"
               falhou=1
             else
-              echo "ok   $código  $u"
+              echo "ok   $estado  $u"
             fi
           done
           exit $falhou
