@@ -24,7 +24,7 @@ function rpc (ws, method, params = {}, sessionId) {
     }
     ws.addEventListener('message', on)
     ws.send(JSON.stringify(sessionId ? { id: i, method, params, sessionId } : { id: i, method, params }))
-    setTimeout(() => { ws.removeEventListener('message', on); rej(new Error(method + ' timeout')) }, 60000)
+    setTimeout(() => { ws.removeEventListener('message', on); rej(new Error(method + ' timeout' + (params && params.expression ? ' :: ' + String(params.expression).slice(0,70).replace(/\s+/g,' ') : ''))) }, 180000)
   })
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms))
@@ -156,7 +156,14 @@ async function main () {
     await sleep(2600)
     if (c.antes) { await rpc(ws, 'Runtime.evaluate', { expression: c.antes, awaitPromise: true, returnByValue: true }, S); await sleep(1400) }
     await rpc(ws, 'Runtime.evaluate', {
-      expression: `document.fonts.ready.then(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{})))).then(()=>1)`,
+      // decode() numa imagem lazy que o browser ainda não pediu pode nunca resolver.
+      // E o Chrome serializa as chamadas da sessão: uma que pendura aqui deixa TODAS
+      // as seguintes na fila, e o timeout aparece na chamada errada.
+      expression: `(async()=>{
+        const tecto = (p, ms) => Promise.race([p, new Promise(r => setTimeout(r, ms))]);
+        await tecto(document.fonts.ready, 8000);
+        await tecto(Promise.all([...document.images].map(i => i.decode().catch(()=>{}))), 12000);
+        return 1 })()`,
       awaitPromise: true, returnByValue: true,
     }, S).catch(() => {})
     await sleep(900)
@@ -179,7 +186,16 @@ async function main () {
         for (const y of [0,.25,.5,.75,1]) { scrollTo(0, document.body.scrollHeight*y); await new Promise(r=>setTimeout(r,120)) }
         scrollTo(0,0);
         const imgs=[...document.images];
-        await Promise.all(imgs.map(i => i.complete ? 0 : new Promise(r => { i.onload=i.onerror=r })));
+        // Um <img loading="lazy"> que o browser ainda não pediu NÃO dispara load nem
+        // error: esperar por ele sem tecto pendura o verificador para sempre. Cada
+        // imagem corre contra um relógio, e no fim conta-se quem ficou por carregar.
+        const espera = i => i.complete ? Promise.resolve() : new Promise(r => {
+          const t = setTimeout(r, 12000);
+          const fim = () => { clearTimeout(t); r() };
+          i.addEventListener('load', fim, {once:true});
+          i.addEventListener('error', fim, {once:true});
+        });
+        await Promise.all(imgs.map(espera));
         await Promise.all(imgs.map(i => i.decode().catch(()=>{})));
         await document.fonts.ready;
         return imgs.filter(i => !i.complete || !i.naturalWidth).length
