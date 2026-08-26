@@ -68,6 +68,36 @@ ESCURO = (23, 25, 29)
 LIMITE_TROCA = 0.55   # acima desta perda em branco, procura-se o escuro
 def rampa(marca): return [BRANCO, ESCURO]
 
+# Retoque pedido pelo Renato, e só onde ele o pediu: no logótipo do Raf Matos a parede
+# da casa é um bloco azul-marinho sólido que, à altura de exibição, faz a marca ler-se
+# como um quadrado escuro. Tira-se essa mancha e ficam o contorno dourado e os painéis.
+# Distingue-se por regiões ligadas: a parede tem 6448px, cada painel ~1000px — seis
+# vezes menos. Não se recolore nada; só se apaga a maior região azul.
+SEM_MANCHA_AZUL = {'raf-matos'}
+
+def tirar_maior_mancha_azul(im):
+    from collections import deque
+    w, h = im.size; px = im.load()
+    def azul(p):
+        r, g, b, a = p
+        return a > 120 and b > r + 22 and b > g + 12 and b > 40
+    visto = [[False]*w for _ in range(h)]
+    maior, tamanho = None, 0
+    for y0 in range(h):
+        for x0 in range(w):
+            if visto[y0][x0] or not azul(px[x0, y0]): continue
+            q = deque([(x0, y0)]); visto[y0][x0] = True; cel = []
+            while q:
+                x, y = q.popleft(); cel.append((x, y))
+                for dx, dy in ((1,0),(-1,0),(0,1),(0,-1)):
+                    nx, ny = x+dx, y+dy
+                    if 0 <= nx < w and 0 <= ny < h and not visto[ny][nx] and azul(px[nx, ny]):
+                        visto[ny][nx] = True; q.append((nx, ny))
+            if len(cel) > tamanho: maior, tamanho = cel, len(cel)
+    if not maior: return im, 0
+    for x, y in maior: px[x, y] = (0, 0, 0, 0)
+    return im, tamanho
+
 def fundo_opaco(im):
     """Um PNG/JPG sem transparência é um logótipo sobre um fundo sólido. O fundo lê-se
     nos quatro cantos: se concordarem, os pixéis dessa cor são fundo, não arte. Sem isto
@@ -194,6 +224,9 @@ for slug, cands in CAND.items():
 print('\n── webp gerado ──')
 for slug, d in dec.items():
     im = Image.open(d['render']).convert('RGBA')
+    if slug in SEM_MANCHA_AZUL:
+        im, n = tirar_maior_mancha_azul(im)
+        print(f'  {slug}: removida a mancha azul de {n} px (parede da casa)')
     bb = im.getbbox()
     if bb: im = im.crop(bb)
     alvo = d['h_logo'] * 2

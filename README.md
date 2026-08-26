@@ -26,8 +26,10 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   não se testa se o ponto cai dentro de uma forma: no aglomerado de Aveiro o polígono do
   vizinho grande envolve a mancha pequena, e apontar a São João da Madeira (5×6 px de
   ecrã) devolveria Oliveira de Azeméis.
-- **Carregar no mapa abre um painel** com os sites daquele concelho — não vai direito a
-  nenhum deles. O painel fica **ao lado** do mapa acima de 900 px e **por baixo** dele em
+- **Passar o rato pelo mapa abre um painel** com os sites daquele concelho — não vai
+  direito a nenhum deles. O clique prende-o (para não fugir quando o rato sai) e no
+  telemóvel o toque abre-o. O fecho é tolerante: quem vai do mapa para o painel
+  atravessa um vão de 16 px, e um fecho imediato tirava-lhe o painel debaixo do cursor. O painel fica **ao lado** do mapa acima de 900 px e **por baixo** dele em
   ecrãs estreitos: ancorado no centróide, o de Santa Maria da Feira (cinco sites, 337 px
   de altura) tapava Leiria e Lisboa.
 - **Um comportamento, dois gatilhos.** O alvo do rato e do dedo é a caixa do mapa toda;
@@ -143,6 +145,21 @@ elementos fora do ecrã, alvos com menos de 24 px, imagens sem `width`/`height`,
 na consola, ou **bandas de 400 px sem nada pintado** — esta última existe porque as
 fichas têm `content-visibility:auto` e uma captura da página inteira já saiu em branco
 a partir da grelha enquanto o script dizia «sem problemas detectados».
+
+## Bateria de testes
+
+```bash
+node _source/pipeline/6-testar.mjs
+U=https://renatovalente5.github.io/Portfolio/ node _source/pipeline/6-testar.mjs
+```
+
+54 afirmações verificadas num browser a sério, com rato, dedo e teclado: contagens que
+têm de bater umas com as outras, o filtro por sector (e que o **mapa não é filtrado**),
+os três modos da fita a 1440/800/375 px, apontar ±3 px em doze concelhos, o painel a
+abrir no hover e a sobreviver ao rato entrar nele, o clique a prendê-lo, o Escape a
+fechá-lo, zero paradas de tabulação no mapa, zero alvos abaixo de 24 px, o botão de
+subir, as ligações dos cartões, e nenhum erro na consola. Sai com código 1 se alguma
+falhar.
 
 ## Pipeline (só quando os dados de origem mudam)
 

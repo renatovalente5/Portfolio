@@ -158,6 +158,8 @@ if (grelha) {
     }))
     let apontado = null
     let abertoEm = null
+    let fixado = false      // um clique prende o painel; o hover sozinho não
+    let temporizador = null
 
     function maisPerto (cx, cy) {
       const r = caixa.getBoundingClientRect()
@@ -232,23 +234,52 @@ if (grelha) {
       }
     }
 
-    /* carregar e tocar: funciona com rato e com dedo */
+    /* Carregar e tocar: funciona com rato e com dedo. O clique PRENDE o painel, para
+       ele não fugir quando o rato sai do mapa. */
     caixa.addEventListener('click', ev => {
       if (ev.target.closest('.painel')) return
       const a = maisPerto(ev.clientX, ev.clientY)
-      abrir(a && abertoEm !== a.c ? a.c : null)
+      if (a && abertoEm === a.c && fixado) { fixado = false; abrir(null); return }
+      fixado = !!a
+      abrir(a ? a.c : null)
       if (a) ev.preventDefault()
     })
+
+    /* Abrir ao passar o rato, sem clicar. O fecho é tolerante: quem vai do mapa para
+       o painel atravessa um vão de 16px, e um fecho imediato tirava-lhe o painel
+       debaixo do cursor antes de ele chegar às ligações. */
+    const cancelar = () => { if (temporizador) { clearTimeout(temporizador); temporizador = null } }
+    const fecharDepois = () => {
+      cancelar()
+      temporizador = setTimeout(() => { if (!fixado) abrir(null) }, 260)
+    }
+    if (fino.matches) {
+      caixa.addEventListener('pointerover', ev => {
+        if (ev.pointerType !== 'mouse') return
+        cancelar()
+        const a = maisPerto(ev.clientX, ev.clientY)
+        if (a && !fixado) abrir(a.c)
+      })
+      for (const pa of paineis) {
+        pa.addEventListener('pointerenter', cancelar)
+        pa.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse') fecharDepois() })
+      }
+    }
 
     /* o nome do concelho é o botão: alvo de 45px, funciona com teclado, e é o mesmo
        painel que o clique no mapa abre. Um comportamento, dois gatilhos. */
     for (const a of alvos) {
       if (!a.bt) continue
-      a.bt.addEventListener('click', () => abrir(abertoEm === a.c ? null : a.c))
+      a.bt.addEventListener('click', () => {
+        const abrirAgora = abertoEm !== a.c
+        fixado = abrirAgora
+        abrir(abrirAgora ? a.c : null)
+      })
     }
     for (const pa of paineis) {
       pa.querySelector('.painel-x').addEventListener('click', () => {
         const c = pa.dataset.concelho
+        fixado = false
         abrir(null)
         const a = alvos.find(x => x.c === c)
         if (a && a.bt) a.bt.focus()
@@ -257,6 +288,7 @@ if (grelha) {
     addEventListener('keydown', ev => {
       if (ev.key !== 'Escape' || !abertoEm) return
       const c = abertoEm
+      fixado = false
       abrir(null)
       const a = alvos.find(x => x.c === c)
       if (a && a.bt) a.bt.focus()
@@ -264,6 +296,8 @@ if (grelha) {
     addEventListener('pointerdown', ev => {
       if (!abertoEm) return
       if (caixa.contains(ev.target) || ev.target.closest('.conc-lista')) return
+      if (ev.target.closest('.painel')) return
+      fixado = false
       abrir(null)
     }, { passive: true })
     addEventListener('resize', () => {
@@ -274,10 +308,14 @@ if (grelha) {
     if (fino.matches) {
       caixa.addEventListener('pointermove', ev => {
         if (ev.pointerType !== 'mouse') return
-        apontar(maisPerto(ev.clientX, ev.clientY))
+        const a = maisPerto(ev.clientX, ev.clientY)
+        apontar(a)
+        if (!fixado && a && abertoEm !== a.c) { cancelar(); abrir(a.c) }
       })
       caixa.addEventListener('pointerleave', ev => {
-        if (ev.pointerType === 'mouse') apontar(null)
+        if (ev.pointerType !== 'mouse') return
+        apontar(null)
+        fecharDepois()
       })
       for (const a of alvos) {
         if (!a.bt) continue
