@@ -1,13 +1,7 @@
 {
  "nome": "Renato Valente",
- "papel": "Faço sites para empresas portuguesas",
- "_nota": "Os campos a null estão em falta. O gerador NÃO inventa contactos: enquanto estiverem a null, os botões correspondentes não são escritos no HTML e o build avisa. nif/morada ficam a null por decisão do Renato — a página não os mostra.",
  "telefone": "+351925110570",
  "telefone_display": "925 110 570",
  "whatsapp": "351925110570",
- "email": null,
- "nif": null,
- "morada": null,
- "linkedin": null,
- "github": "https://github.com/renatovalente5"
+ "email": null
 }

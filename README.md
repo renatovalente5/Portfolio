@@ -71,8 +71,9 @@ a ligação `tel:` — em corpo grande não precisa de uma palavra a dizer o que
 
 ```
 data/
-  trabalhos.json      ← a fonte de verdade dos trabalhos
-  autor.json          ← nome e contactos (nif/morada ficam a null por decisão)
+  trabalhos.json      ← os dados. FORA do backoffice, e por isso a salvo dele.
+  vitrine.json        ← a ordem e o mostrar/esconder. É o ficheiro do backoffice.
+  autor.json          ← os contactos.
 _source/
   build.mjs           ← o gerador (só node:fs / node:path)
   cor.mjs             ← sRGB ↔ OKLab/OKLCh, contraste WCAG, famílias de matiz
@@ -86,37 +87,61 @@ assets/
 index.html            ← GERADO. Não editar.
 ```
 
-## Backoffice — esconder e mostrar trabalhos
+## Backoffice
 
-O botão que interessa é o **«Mostrar na página»** de cada trabalho. Ao desligá-lo, o
-trabalho sai da grelha **e todos os números se recalculam sozinhos**: os contadores do
-topo, as contagens dos chips de sector, os concelhos do mapa e a lista de nomes. Nada
-na página é escrito à mão, por isso não há nada para ir corrigir.
+Dois ecrãs, oito campos. É [Pages CMS](https://pagescms.org) (grátis, MIT, sem cartão),
+configurado em `.pages.yml`.
 
-É o [Pages CMS](https://pagescms.org) (grátis, MIT, sem cartão), configurado em
-`.pages.yml`. Duas colecções: **Trabalhos** (`data/trabalhos.json`) e **Os meus
-contactos** (`data/autor.json`).
+**Cartões** — `data/vitrine.json`, três campos por linha:
+- **Mostrar** — desliga para esconder o cartão. Os contadores do topo, as contagens dos
+  chips de sector e os concelhos do mapa recalculam-se sozinhos.
+- **Cartão** — só um rótulo para a lista. O nome que aparece no site vem dos dados, e o
+  build repõe este a cada publicação.
+- **Identificador** — o que liga a linha aos dados. Não mexer.
 
-**Activar, uma vez só:**
-1. Ir a [app.pagescms.org](https://app.pagescms.org) e entrar com o GitHub.
-2. Instalar a app do Pages CMS neste repositório (`renatovalente5/Portfolio`).
-3. Abrir o projecto — as duas colecções aparecem sozinhas, a partir do `.pages.yml`.
+**A ordem desta lista é a ordem da página.** Arrastam-se os itens pelo puxador à
+esquerda. O Pages CMS usa `@dnd-kit/sortable` no formulário de entrada (confirmado em
+`components/entry/entry-form.tsx` do projecto; os docs não o mencionam).
 
-Para dar acesso a outra pessoa sem conta de GitHub: convidar por email no painel do
-Pages CMS; entra por link mágico.
+**Contactos** — `data/autor.json`, o telemóvel e o WhatsApp. Deixar um campo vazio faz
+o botão correspondente desaparecer da página; nada é inventado.
+
+### Porque é que o backoffice é tão pequeno
+
+O Pages CMS reescreve o ficheiro inteiro ao gravar e **apaga as chaves que o
+`.pages.yml` não declara**. A primeira versão deste backoffice expunha o
+`data/trabalhos.json` e tinha de declarar os 27 campos todos — incluindo os que já não
+aparecem na página — só para não os perder. Ficou uma parede de campos para chegar a um
+interruptor.
+
+Agora há dois ficheiros com donos diferentes:
+
+| ficheiro | dono | conteúdo |
+|---|---|---|
+| `data/trabalhos.json` | o repositório | tudo: nomes, endereços, cores, concelhos, coordenadas |
+| `data/vitrine.json` | o backoffice | a ordem e o mostrar/esconder |
+| `data/autor.json` | o backoffice | os contactos |
+
+O `trabalhos.json` **não está declarado no `.pages.yml`**, logo o backoffice nem o vê —
+e não lhe pode apagar nada. Guardas do build:
+
+- um `id` na vitrine que não exista nos dados **pára a publicação**, com a mensagem a
+  dizer qual;
+- um trabalho novo nos dados e ainda não na vitrine **entra no fim** e o build avisa —
+  acrescentar um trabalho não obriga a mexer em dois ficheiros na ordem certa;
+- o `nome` da vitrine é reescrito dos dados a cada build, por isso não pode ficar
+  desencontrado.
+
+**Activar, uma vez só:** ir a [app.pagescms.org](https://app.pagescms.org), entrar com o
+GitHub, instalar a app neste repositório. As duas colecções aparecem sozinhas. Para dar
+acesso a outra pessoa sem conta GitHub: convidar por email no painel do Pages CMS.
 
 **O que acontece ao gravar:** o CMS faz commit em `main` → o GitHub Actions corre
-`node _source/build.mjs`, escreve o `index.html` de volta ao repositório e publica.
-Demora 1 a 3 minutos. Se os dados ficarem inválidos (uma contagem que não soma, um
-concelho que não existe na CAOP, uma cor de marca sem 4,5:1), **o build falha e nada é
-publicado** — a página no ar continua a última que estava boa.
+`node _source/build.mjs`, escreve o `index.html` de volta e publica. Um a três minutos.
+Se os dados ficarem inválidos, o build falha e **nada é publicado** — a página no ar
+continua a última que estava boa.
 
-**Duas armadilhas do Pages CMS, já resolvidas aqui:**
-- O CMS **apaga as chaves que não conhece** ao gravar. Por isso o `.pages.yml` declara
-  *todos* os campos que existem nos dados, mesmo os que já não aparecem na página
-  (`resumo`, `destaque`, `destaque_largo`, `nif`, `morada`). Ao acrescentar um campo aos
-  dados, acrescentá-lo também ao `.pages.yml`.
-- Como o CMS faz commit em `main`, antes de empurrar alterações locais correr sempre:
+Ao editar localmente, correr sempre primeiro:
 
 ```bash
 git fetch && git rebase origin/main
@@ -191,23 +216,14 @@ de traço fino dá mais altura.
 ## Acrescentar um trabalho
 
 1. Juntar a entrada a `data/trabalhos.json` (o `concelho` tem de existir na lista dos
-   308 e a `lat`/`lon` tem de ser o centróide desse concelho — o build verifica).
+   308 e a `lat`/`lon` tem de ser o centróide desse concelho — o build verifica). Não é
+   preciso tocar na `vitrine.json`: o build acrescenta a linha no fim e avisa; depois
+   arrasta-se para o lugar no backoffice.
 2. `node _source/pipeline/1-capturar.mjs <id>` e acrescentar o `id` à lista `SITES`.
 3. `python3 _source/pipeline/2-capturas.py && python3 _source/pipeline/3-logos.py`
 4. `node _source/build.mjs`
 
 Nenhuma contagem precisa de ser tocada: são todas recalculadas.
-
-## A ordem dos trabalhos
-
-**A ordem da página é, exactamente, a ordem do array em `data/trabalhos.json`.** O build
-não ordena nada — `const ordenados = [...trabalhos]` e mais nada. Está semeada de norte
-para sul (por latitude), com o Praiómetro, que não tem concelho, no fim.
-
-Para mudar: no backoffice, arrastar os itens da lista pelo puxador à esquerda. O Pages
-CMS usa `@dnd-kit/sortable` no formulário de entrada (confirmado no código do projecto,
-em `components/entry/entry-form.tsx`, embora não esteja nos docs). A fita e a grelha
-saem sempre da mesma lista, por isso nunca se desencontram.
 
 ## O botão de gestão
 

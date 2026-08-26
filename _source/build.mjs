@@ -16,10 +16,40 @@ const RAIZ = join(AQUI, '..')
 const ler = p => JSON.parse(readFileSync(join(RAIZ, p), 'utf8'))
 const AUDITAR = process.argv.includes('--auditar')
 
-const TODOS = ler('data/trabalhos.json')
-// `visivel: false` esconde o trabalho da página. É o único botão do backoffice, e
-// TODOS os números da página se recalculam a partir daqui — não há nada escrito à mão.
-const trabalhos = TODOS.filter(t => t.visivel !== false)
+// Declarados antes de tudo o que os possa usar: em zona morta temporal, um `falha()`
+// chamado cedo rebenta com ReferenceError em vez de dizer o que está mal.
+const erros = [], avisos = []
+const falha = m => erros.push(m)
+const aviso = m => avisos.push(m)
+
+// ── Duas fontes, com donos diferentes ──────────────────────────────────────
+//   data/trabalhos.json — os dados. O backoffice NÃO o vê, e por isso não lhe pode
+//                         apagar chaves (o Pages CMS apaga o que não declara).
+//   data/vitrine.json   — a ORDEM e o mostrar/esconder. É o único ficheiro do
+//                         backoffice, e tem três campos.
+const DADOS = ler('data/trabalhos.json')
+const vitrine = ler('data/vitrine.json')
+const porId = new Map(DADOS.map(t => [t.id, t]))
+
+// Um id na vitrine que não exista nos dados é uma gralha: pára.
+for (const v of vitrine) {
+  if (!porId.has(v.id)) falha(`data/vitrine.json: o id "${v.id}" não existe em trabalhos.json`)
+}
+// Um trabalho novo nos dados e ainda não na vitrine entra no fim, e avisa-se.
+// (Assim acrescentar um trabalho não exige mexer em dois ficheiros na ordem certa.)
+const naVitrine = new Set(vitrine.map(v => v.id))
+for (const t of DADOS) {
+  if (!naVitrine.has(t.id)) {
+    vitrine.push({ id: t.id, nome: t.nome, mostrar: true })
+    aviso(`${t.id}: não estava em data/vitrine.json — acrescentado no fim`)
+  }
+}
+// O nome na vitrine é só um rótulo para o backoffice: vem sempre dos dados.
+for (const v of vitrine) { const t = porId.get(v.id); if (t) v.nome = t.nome }
+writeFileSync(join(RAIZ, 'data/vitrine.json'), JSON.stringify(vitrine, null, 1) + '\n')
+
+const TODOS = vitrine.map(v => porId.get(v.id)).filter(Boolean)
+const trabalhos = vitrine.filter(v => v.mostrar !== false).map(v => porId.get(v.id)).filter(Boolean)
 const escondidos = TODOS.length - trabalhos.length
 const autor = ler('data/autor.json')
 const capturas = ler('_source/dados/capturas.json')
@@ -27,9 +57,6 @@ const logos = ler('_source/dados/logos.json')
 const mapa = ler('_source/dados/mapa-continente.json')
 const concelhos = ler('_source/dados/concelhos.json')
 
-const erros = [], avisos = []
-const falha = m => erros.push(m)
-const aviso = m => avisos.push(m)
 
 // ── fundos da página, para o cálculo de contraste das marcas ────────────────
 const PAPEL = '#FBFAF8'
@@ -86,6 +113,8 @@ if (!TEL) aviso('data/autor.json: telefone em falta — os botões de "Ligar" N�
 // NIF, morada, email e WhatsApp estão a null por decisão, não por esquecimento:
 // não se avisa por uma decisão, avisa-se por uma falta.
 const SEM_CONTACTO = !TEL && !WA && !MAIL
+// Atalho para o backoffice. Fica no rodapé, ao lado do telemóvel.
+const GESTAO = 'https://app.pagescms.org'
 
 // ── 3. NÚMEROS — todos calculados, nenhum escrito à mão ────────────────────
 const N = trabalhos.length
@@ -116,10 +145,10 @@ for (const t of trabalhos) {
 }
 const famOrd = [...fam.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'pt'))
 
-// ── 4. ORDEM: é a ordem do ficheiro data/trabalhos.json, e mais nada ────────
-// Assim o Renato manda na ordem: no backoffice arrastam-se os itens da lista (o Pages
-// CMS usa @dnd-kit/sortable no formulário de entrada) e a página segue.
-// O ficheiro está semeado em norte→sul, com o Praiómetro — que não tem concelho — no fim.
+// ── 4. ORDEM: é a ordem de data/vitrine.json, e mais nada ───────────────────
+// No backoffice arrastam-se os itens dessa lista (o Pages CMS usa @dnd-kit/sortable no
+// formulário de entrada) e a página segue. Semeada em norte→sul, com o Praiómetro — que
+// não tem concelho — no fim.
 const ordenados = [...trabalhos]
 
 // O primeiro cartão de cada concelho, na ordem em que a grelha o desenha (norte→sul).
@@ -383,7 +412,7 @@ const html = `<!doctype html>
 
 <footer class="rodape">
  <p class="rod-1"><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}${
-   autor.github ? ` · <a class="gestao" href="https://app.pagescms.org" target="_blank" rel="noopener">Gestão</a>` : ''}</p>
+   GESTAO ? ` · <a class="gestao" href="${esc(GESTAO)}" target="_blank" rel="noopener">Gestão</a>` : ''}</p>
  <p>Mapa: Carta Administrativa Oficial de Portugal, DGT.</p>
 </footer>
 
@@ -450,7 +479,7 @@ for (const m of gerado.matchAll(/(tel:|wa\.me\/|mailto:)([^"'<\s]*)/g)) {
 }
 
 if (!trabalhos.length) falha('todos os trabalhos estão com visivel:false — a página ficaria vazia')
-if (escondidos) console.log(`\n  ${escondidos} ${escondidos === 1 ? 'trabalho escondido' : 'trabalhos escondidos'} (visivel:false) — não contam para nada`)
+if (escondidos) console.log(`\n  ${escondidos} ${escondidos === 1 ? 'trabalho escondido' : 'trabalhos escondidos'} em data/vitrine.json — não contam para nada`)
 console.log(`\n  ${N} trabalhos · ${porConcelho.size} concelhos · ${nDominio} com .pt · ${nBackoffice} com backoffice`)
 console.log(`  sectores: ${sectoresOrd.map(([, v]) => `${v.nome} ${v.n}`).join(' · ')}`)
 console.log(`  censo:    ${famOrd.map(([f, ts]) => `${f} ${ts.length}`).join(' · ')}`)

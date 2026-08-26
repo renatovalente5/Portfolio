@@ -163,16 +163,16 @@ async function main () {
      dev.peso === '600' && dev.etiquetaBackgroundOk !== false, `peso ${dev.peso}, fundo ${dev.etiquetaContraste}`)
 
   const ordem = await ev(`(async()=>{
-    const r = await fetch('data/trabalhos.json'); if(!r.ok) return null;
-    const dados = (await r.json()).filter(x=>x.visivel!==false).map(x=>x.nome);
+    const r = await fetch('data/vitrine.json'); if(!r.ok) return null;
+    const dados = (await r.json()).filter(x=>x.mostrar!==false).map(x=>x.nome);
     const pagina = [...document.querySelectorAll('.ficha h3 a')].map(a=>a.textContent.replace(/ — abre.*/,'').trim());
     const fita = [...document.querySelectorAll('#fita i')].map(i=>i.dataset.id);
     const ids = [...document.querySelectorAll('.ficha')].map(f=>f.dataset.id);
     return {iguais: JSON.stringify(dados)===JSON.stringify(pagina), primeiros: pagina.slice(0,3),
             fitaSegueGrelha: JSON.stringify(fita)===JSON.stringify(ids)}})()`)
-  if (ordem === null) ok('a ordem da página é a do ficheiro (não verificável no site vivo)', true)
+  if (ordem === null) ok('a ordem da página é a do ficheiro (data/vitrine.json não acessível)', true)
   else {
-    ok('a ordem da página é EXACTAMENTE a do data/trabalhos.json', ordem.iguais, JSON.stringify(ordem.primeiros))
+    ok('a ordem da página é EXACTAMENTE a do data/vitrine.json', ordem.iguais, JSON.stringify(ordem.primeiros))
     ok('a fita segue a mesma ordem da grelha', ordem.fitaSegueGrelha)
   }
 
