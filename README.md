@@ -29,9 +29,17 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
 - **Passar o rato pelo mapa abre um painel** com os sites daquele concelho — não vai
   direito a nenhum deles. O clique prende-o (para não fugir quando o rato sai) e no
   telemóvel o toque abre-o. O fecho é tolerante: quem vai do mapa para o painel
-  atravessa um vão de 16 px, e um fecho imediato tirava-lhe o painel debaixo do cursor. O painel fica **ao lado** do mapa acima de 900 px e **por baixo** dele em
-  ecrãs estreitos: ancorado no centróide, o de Santa Maria da Feira (cinco sites, 337 px
-  de altura) tapava Leiria e Lisboa.
+  atravessa um vão de 16 px, e um fecho imediato tirava-lhe o painel debaixo do cursor.
+- **O painel abre sobre o mapa, junto à mancha**, em qualquer largura. São 36 posições
+  candidatas — quatro lados, cada um deslizado de −100 % a +100 % ao longo do painel —
+  todas presas ao ecrã e pontuadas: sentar-se na mancha em que se carregou está fora
+  de questão, tapar um vizinho assinalado custa 120 px de afastamento, e a seguir ganha
+  quem estiver mais perto. O **lado sai da posição final**, não da candidata: depois de
+  prender ao ecrã, uma candidata «cima» pode acabar à direita da mancha, e o bico
+  apontava para o lado errado. Medido nos doze concelhos a seis larguras, de 390 px a
+  1920 px: nenhum sai do ecrã, nenhum tapa outra mancha, nenhum tapa a sua.
+- **Tocar fora fecha.** «Fora» é para além de 120 unidades do mapa (≈ 70 km) de
+  qualquer mancha — tocar no Alentejo não abre o painel de Lisboa.
 - **Um comportamento, dois gatilhos.** O alvo do rato e do dedo é a caixa do mapa toda;
   o gatilho de teclado é o **nome do concelho**, que é um `<button>` de 45 px com
   `aria-expanded`. As manchas do SVG são decoração (`aria-hidden`, sem `tabindex`):
@@ -59,9 +67,10 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   no HTML não vier de `data/autor.json`, se as capturas tiverem mais de 120 dias, ou se
   um número por extenso contradisser o número real de trabalhos, o build falha.
 
-O telefone aparece em quatro sítios (cabeça fixa, herói, contacto, rodapé) e na barra
-fixa do telemóvel, ao lado do WhatsApp — e sai **sempre** de `data/autor.json`, nunca
-escrito à mão. O botão da cabeça fixa vai para o **WhatsApp**, e diz-o: «WhatsApp
+O telefone aparece em quatro sítios (cabeça fixa, herói, contacto, rodapé) e sai
+**sempre** de `data/autor.json`, nunca escrito à mão. No telemóvel a cabeça fixa não
+mostra o número — ele está no herói, na secção de contacto e no rodapé; **não há barra
+fixa** por cima da página. O botão da cabeça fixa vai para o **WhatsApp**, e diz-o: «WhatsApp
 925 110 570». Na secção de contacto o número aparece em tamanho grande e é ele próprio
 a ligação `tel:` — em corpo grande não precisa de uma palavra a dizer o que é.
 
@@ -180,11 +189,12 @@ node _source/pipeline/6-testar.mjs
 U=https://renatovalente5.github.io/Portfolio/ node _source/pipeline/6-testar.mjs
 ```
 
-54 afirmações verificadas num browser a sério, com rato, dedo e teclado: contagens que
+70 afirmações verificadas num browser a sério, com rato, dedo e teclado: contagens que
 têm de bater umas com as outras, o filtro por sector (e que o **mapa não é filtrado**),
 os três modos da fita a 1440/800/375 px, apontar ±3 px em doze concelhos, o painel a
 abrir no hover e a sobreviver ao rato entrar nele, o clique a prendê-lo, o Escape a
-fechá-lo, zero paradas de tabulação no mapa, zero alvos abaixo de 24 px, o botão de
+fechá-lo, o painel a flutuar sobre o mapa junto à mancha no telemóvel e a fechar ao
+tocar fora, zero paradas de tabulação no mapa, zero alvos abaixo de 24 px, o botão de
 subir, as ligações dos cartões, e nenhum erro na consola. Sai com código 1 se alguma
 falhar.
 

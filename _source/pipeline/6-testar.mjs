@@ -256,8 +256,9 @@ async function main () {
   ok('o painel lista os 5 sites de Santa Maria da Feira', hov.sites === 5, `${hov.sites} sites`)
   ok('o painel fica dentro do ecrã', hov.noEcra === true)
 
-  // O painel tem de aparecer AO LADO da mancha, não a meio do ecrã. Mede-se a
-  // distância do centróide à aresta mais próxima do painel, nos doze concelhos.
+  // O painel tem de aparecer AO LADO da mancha, não a meio do ecrã. Mede-se à
+  // MANCHA e não ao centróide: em Leiria, que é grande, um painel encostado à mancha
+  // fica a 57px do centróide e passaria por «longe» sem estar.
   const lados = []
   for (const c of await ev(`[...document.querySelectorAll('.mapa-cima .conc path')].map(p=>p.dataset.concelho)`)) {
     const q = await pontoDe(c)
@@ -269,8 +270,13 @@ async function main () {
       const cx=document.querySelector('.mapa-caixa'), s=document.querySelector('.mapa-cima');
       const vb=s.getAttribute('viewBox').split(/\\s+/).map(Number); const rc=cx.getBoundingClientRect();
       const p=s.querySelector('.conc path[data-concelho="'+pa.dataset.concelho+'"]');
-      const px=rc.left+(+p.dataset.cx-vb[0])/vb[2]*rc.width, py=rc.top+(+p.dataset.cy-vb[1])/vb[3]*rc.height;
-      const dx=Math.max(b.left-px,0,px-b.right), dy=Math.max(b.top-py,0,py-b.bottom);
+      const m=p.getBoundingClientRect();
+      const dx=Math.max(b.left-m.right,0,m.left-b.right), dy=Math.max(b.top-m.bottom,0,m.top-b.bottom);
+      // o painel nunca se pode sentar em cima da mancha em que se carregou
+      const tapaPropria=b.left<m.right&&b.right>m.left&&b.top<m.bottom&&b.bottom>m.top;
+      // e o bico tem de apontar ao sítio certo
+      const bicoCerto={dir:b.left>=m.right-1,esq:b.right<=m.left+1,
+                       baixo:b.top>=m.bottom-1,cima:b.bottom<=m.top+1}[pa.dataset.lado]===true;
       let tapa=null;
       for (const o of s.querySelectorAll('.conc path')) {
         if (o.dataset.concelho===pa.dataset.concelho) continue;
@@ -280,10 +286,11 @@ async function main () {
         if (b.left<ox+ow && b.right>ox && b.top<oy+oh && b.bottom>oy) { tapa=o.dataset.concelho; break }
       }
       return {c:pa.dataset.concelho, dist:Math.round(Math.hypot(dx,dy)), tapa,
-              noEcra:b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight,
+              tapaPropria, bicoCerto,
+              noEcra:b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight+1,
               lado:pa.dataset.lado}})()`))
   }
-  const longe = lados.filter(l => l.dist > 30)
+  const longe = lados.filter(l => l.dist > 50)
   const tapam = lados.filter(l => l.tapa)
   const fora = lados.filter(l => !l.noEcra)
   ok(`o painel abre AO LADO da mancha nos ${lados.length} concelhos`, longe.length === 0,
@@ -291,9 +298,10 @@ async function main () {
   ok('e não tapa nenhum outro concelho assinalado', tapam.length === 0,
      tapam.map(l => `${l.c} tapa ${l.tapa}`).join(', '))
   ok('e nunca sai do ecrã', fora.length === 0, fora.map(l => l.c).join(', '))
-  ok('o bico aponta para a mancha (lado definido em todos)',
-     lados.every(l => ['dir','esq','cima','baixo'].includes(l.lado)),
-     lados.filter(l => !l.lado).map(l => l.c).join(', '))
+  ok('nunca se senta em cima da mancha em que se carregou',
+     lados.every(l => !l.tapaPropria), lados.filter(l => l.tapaPropria).map(l => l.c).join(', '))
+  ok('e o bico aponta para o lado onde a mancha está',
+     lados.every(l => l.bicoCerto), lados.filter(l => !l.bicoCerto).map(l => `${l.c}: ${l.lado}`).join(', '))
   // e passar para outro concelho troca
   const lis = await pontoDe('lisboa')
   await rato(lis.x, lis.y); await sleep(500)
@@ -351,16 +359,48 @@ async function main () {
   const toque = await ev(`(()=>{const p=[...document.querySelectorAll('.painel')].filter(x=>!x.hidden)[0];
     if(!p) return {aberto:null};
     const r=p.getBoundingClientRect();
+    const s=document.querySelector('.mapa-cima')
+    const rm=document.querySelector('.mapa-caixa').getBoundingClientRect()
+    const m=s.querySelector('.conc path[data-concelho="'+p.dataset.concelho+'"]').getBoundingClientRect()
+    const dx=Math.max(r.left-m.right,0,m.left-r.right), dy=Math.max(r.top-m.bottom,0,m.top-r.bottom)
     return {aberto:p.dataset.concelho, noEcra:r.top>=0&&r.bottom<=innerHeight+2,
-            subirEscondido:getComputedStyle(document.querySelector('.subir')).opacity==='0'}})()`)
+            posicao:getComputedStyle(p).position,
+            sobreOMapa:r.left<rm.right&&r.right>rm.left&&r.top<rm.bottom&&r.bottom>rm.top,
+            dist:Math.round(Math.hypot(dx,dy)),
+            tapaPropria:r.left<m.right&&r.right>m.left&&r.top<m.bottom&&r.bottom>m.top}})()`)
   ok('tocar no mapa abre o painel', toque.aberto === 'ovar', `aberto=${toque.aberto}`)
   ok('o painel entra no ecrã no telemóvel', toque.noEcra === true)
-  ok('o botão de subir não colide com o painel', toque.subirEscondido === true)
-  ok('a barra de acção tem os dois contactos',
-     await ev(`[...document.querySelectorAll('.accao a')].map(a=>a.href.split(':')[0]+(a.href.includes('wa.me')?'/wa':'')).join(',')`)
-       .then ? true : true)
-  const barra = await ev(`[...document.querySelectorAll('.accao a')].map(a=>a.getAttribute('href'))`)
-  ok('barra fixa: tel + WhatsApp', barra.length === 2 && barra[0].startsWith('tel:') && barra[1].includes('wa.me'), JSON.stringify(barra))
+  ok('e flutua SOBRE o mapa, não em fluxo por baixo dele',
+     toque.posicao === 'absolute' && toque.sobreOMapa === true,
+     `position=${toque.posicao} sobreOMapa=${toque.sobreOMapa}`)
+  ok('junto à mancha em que se tocou', toque.dist !== null && toque.dist <= 50, `${toque.dist}px`)
+  ok('sem se sentar em cima dela', toque.tapaPropria === false)
+
+  // «Clicar fora» tem de fechar. Fora = para além do raio de 120 unidades a que o
+  // mapa deixa de considerar que se está a apontar a alguma coisa.
+  const longeDeTudo = await ev(`(()=>{const s=document.querySelector('.mapa-cima')
+    const r=document.querySelector('.mapa-caixa').getBoundingClientRect()
+    const vb=s.getAttribute('viewBox').split(/\\s+/).map(Number)
+    const cs=[...s.querySelectorAll('.conc path')].map(p=>[+p.dataset.cx,+p.dataset.cy])
+    const pa=[...document.querySelectorAll('.painel')].filter(x=>!x.hidden)[0]
+    const b=pa.getBoundingClientRect()
+    for(let y=r.top+8;y<r.bottom-8;y+=9) for(let x=r.left+8;x<r.right-8;x+=9){
+      if(x>b.left-8&&x<b.right+8&&y>b.top-8&&y<b.bottom+8) continue
+      const ux=vb[0]+(x-r.left)/r.width*vb[2], uy=vb[1]+(y-r.top)/r.height*vb[3]
+      if(cs.some(([a,c])=>(a-ux)**2+(c-uy)**2 <= 120*120)) continue
+      return {x:Math.round(x),y:Math.round(y)}} return null})()`)
+  if (longeDeTudo) {
+    await rpc(ws, 'Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [longeDeTudo] }, S)
+    await rpc(ws, 'Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S)
+    await sleep(350)
+  }
+  ok('tocar fora fecha o painel',
+     await ev(`[...document.querySelectorAll('.painel')].every(p=>p.hidden)`),
+     longeDeTudo ? '' : 'não havia ponto longe o suficiente no ecrã')
+
+  // A barra fixa de contactos foi retirada a pedido: no telemóvel não pode voltar.
+  ok('não há barra fixa de contactos no telemóvel',
+     await ev(`!document.querySelector('.accao')`))
 
   // ═══ 6. BOTÃO DE SUBIR ════════════════════════════════════════════════════
   console.log('\n── botão de subir')

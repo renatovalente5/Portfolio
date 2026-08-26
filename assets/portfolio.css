@@ -39,7 +39,7 @@
   --sinal:#0B4FC4;    /*  6,7:1 */
   --sombra:0 1px 2px rgba(20,22,26,.05), 0 14px 32px -22px rgba(20,22,26,.34);
   --sombra-2:0 2px 4px rgba(20,22,26,.06), 0 22px 44px -26px rgba(20,22,26,.40);
-  --barra:52px; --fita-h:6px; --raio:14px; --accao-h:78px;
+  --barra:52px; --fita-h:6px; --raio:14px;
   --sans:"Schibsted Grotesk","Schibsted recurso",system-ui,-apple-system,sans-serif;
   --mono:"IBM Plex Mono","Plex recurso",ui-monospace,monospace;
   color-scheme:light dark;
@@ -240,15 +240,25 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 .mapa-caixa[data-mostra]{cursor:pointer}
 .mapa-cima{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
 
-/* O painel de um concelho: abre ao carregar na mancha e lista os sites de lá.
-   NÃO fica sobre o mapa. O de Santa Maria da Feira tem cinco sites e 347px de altura:
-   ancorado no centróide, tapava Leiria e Lisboa. Fica AO LADO, à altura do concelho,
-   onde a coluna do texto tem espaço de sobra — e no telemóvel fica por baixo do mapa,
-   em fluxo normal, sem geometria nenhuma para calcular. */
+/* O painel de um concelho: abre em cima do mapa, junto à mancha, em qualquer largura.
+   O JS escolhe entre 22 posições em volta do centróide a primeira que caiba no ecrã e
+   não tape nenhum dos outros concelhos assinalados. Fundo opaco, porque o texto nunca
+   pode assentar nas cores das marcas. */
 .painel{
-  margin-top:18px;padding:12px 14px 10px;border-radius:12px;position:relative;
+  position:absolute;z-index:4;
+  width:min(216px,calc(100vw - 32px));
+  padding:12px 14px 10px;border-radius:12px;
   background:var(--superficie);border:1px solid var(--fio);box-shadow:var(--sombra-2)
 }
+.painel::after{   /* bico a apontar à mancha */
+  content:"";position:absolute;width:8px;height:8px;
+  background:var(--superficie);border:1px solid var(--fio);
+  border-right:0;border-bottom:0
+}
+.painel[data-lado="dir"]::after{left:-5px;top:var(--bico,50%);transform:translateY(-50%) rotate(-45deg)}
+.painel[data-lado="esq"]::after{right:-5px;top:var(--bico,50%);transform:translateY(-50%) rotate(135deg)}
+.painel[data-lado="baixo"]::after{top:-5px;left:var(--bico,50%);transform:translateX(-50%) rotate(45deg)}
+.painel[data-lado="cima"]::after{bottom:-5px;left:var(--bico,50%);transform:translateX(-50%) rotate(-135deg)}
 .painel-t{
   display:flex;align-items:baseline;gap:7px;padding-right:22px;
   font-size:.9375rem;font-weight:600;color:var(--tinta)
@@ -267,21 +277,6 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 .painel li>span{
   display:block;font:400 .625rem/1.35 var(--mono);color:var(--tinta-3);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap
-}
-@media (min-width:900px){
-  /* Ao lado da MANCHA, não do mapa. O JS escolhe entre quatro posições em volta do
-     centróide a primeira que caiba no ecrã e não tape nenhum dos outros concelhos
-     assinalados; só se nenhuma servir é que sai para fora do mapa. */
-  .painel{position:absolute;z-index:4;margin:0;width:216px}
-  .painel::after{   /* bico a apontar à mancha */
-    content:"";position:absolute;width:8px;height:8px;
-    background:var(--superficie);border:1px solid var(--fio);
-    border-right:0;border-bottom:0
-  }
-  .painel[data-lado="dir"]::after{left:-5px;top:var(--bico,50%);transform:translateY(-50%) rotate(-45deg)}
-  .painel[data-lado="esq"]::after{right:-5px;top:var(--bico,50%);transform:translateY(-50%) rotate(135deg)}
-  .painel[data-lado="baixo"]::after{top:-5px;left:var(--bico,50%);transform:translateX(-50%) rotate(45deg)}
-  .painel[data-lado="cima"]::after{bottom:-5px;left:var(--bico,50%);transform:translateX(-50%) rotate(-135deg)}
 }
 .painel-x{
   position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;
@@ -481,37 +476,12 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
   transition:opacity .2s ease,transform .2s ease,border-color .18s ease
 }
 .subir[data-ver]{opacity:1;transform:none;pointer-events:auto}
-/* o painel do concelho e o botão de subir disputam o mesmo canto em ecrã estreito */
-body[data-painel] .subir{opacity:0;pointer-events:none}
-@media (min-width:900px){body[data-painel] .subir[data-ver]{opacity:1;pointer-events:auto}}
 .subir:hover{border-color:var(--tinta-3)}
-
-.accao{
-  position:fixed;inset:auto 0 0 0;z-index:70;display:flex;gap:10px;
-  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
-  background:color-mix(in srgb,var(--papel) 93%,transparent);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border-top:1px solid var(--fio)
-}
-.accao a{
-  flex:1;min-height:48px;display:grid;place-items:center;border-radius:12px;
-  font-weight:600;font-size:.9375rem;text-decoration:none;
-  background:var(--tinta);color:var(--papel)
-}
-.accao a+a{background:transparent;color:var(--tinta);border:1px solid var(--tinta-3)}
-/* espaço reservado: a barra fixa não tapa o rodapé, e o botão de subir sobe acima dela */
-body:has(.accao){padding-bottom:var(--accao-h)}
-body:has(.accao) .subir{
-  bottom:calc(var(--accao-h) + clamp(12px,2vw,18px) + env(safe-area-inset-bottom))
-}
 
 /* ═══ pontos de quebra ════════════════════════════════════════════════════ */
 @media (min-width:900px){
   .topo nav{display:flex}
   .topo-tel{display:inline-flex;align-items:center}
-  .accao{display:none}
-  body:has(.accao){padding-bottom:0}
-  body:has(.accao) .subir{bottom:clamp(14px,2.5vw,26px)}
   .onde{grid-template-columns:1fr .72fr;align-items:center}
   .onde .mapa{position:sticky;top:calc(var(--barra) + var(--fita-h) + 24px)}
   .cabeca h1{max-width:19ch}
@@ -544,7 +514,7 @@ body:has(.accao) .subir{
 /* Toda a linguagem gráfica são fios a 8–14% de tinta e uma cor de acento — é
    exactamente o que o modo de alto contraste apaga. */
 @media (forced-colors:active){
-  .topo,.accao,.subir{background:Canvas;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .topo,.subir{background:Canvas;-webkit-backdrop-filter:none;backdrop-filter:none}
   .subir{color:CanvasText;border:1px solid CanvasText}
   .ficha{border:1px solid CanvasText}
   .ficha .filete{background:CanvasText}
@@ -569,6 +539,6 @@ body:has(.accao) .subir{
   .conc-lista li[data-activo] .cn,
   .conc-lista .cn[aria-expanded="true"]{color:Highlight;text-decoration:underline}
   .cx-num{color:LinkText;box-shadow:none;text-decoration:underline}
-  .b--1,.accao a{background:CanvasText;color:Canvas;border:1px solid CanvasText}
-  .b--2,.accao a+a{background:Canvas;color:CanvasText;border:1px solid CanvasText}
+  .b--1{background:CanvasText;color:Canvas;border:1px solid CanvasText}
+  .b--2{background:Canvas;color:CanvasText;border:1px solid CanvasText}
 }

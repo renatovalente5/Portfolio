@@ -222,11 +222,6 @@ if (grelha) {
     function posicionar (a) {
       const pa = a.painel
       if (!pa) return
-      if (!matchMedia('(min-width:900px)').matches) {
-        pa.style.left = pa.style.top = ''
-        pa.removeAttribute('data-lado'); pa.style.removeProperty('--bico')
-        return
-      }
       const r = caixa.getBoundingClientRect()
       if (!r.height) return
       // o painel tem de estar visível para se medir
@@ -235,39 +230,71 @@ if (grelha) {
       const cy = (a.cy - vb[1]) / vb[3] * r.height
       const G = 16   // afastamento da mancha
 
-      // Posições em volta do centróide. Primeiro os lados, centrados; depois os
-      // mesmos lados deslizados para cima e para baixo; depois abaixo e acima, também
-      // deslizados. Só quando nada disto couber é que o painel sai do mapa — no
-      // aglomerado de Aveiro há concelhos cercados por vizinhos assinalados de todos
-      // os lados, e é melhor deslizar 40% do que fugir 150px.
+      // Trinta e seis posições em volta do centróide: os quatro lados, cada um
+      // deslizado de -100% a +100% ao longo do painel. No aglomerado de Aveiro há
+      // concelhos cercados de vizinhos assinalados por todos os lados, e deslizar é
+      // o que permite encaixar o painel entre eles sem sair do mapa.
       const candidatas = []
-      for (const dy of [0, -0.34, 0.34, -0.5, 0.5]) {
+      for (const dy of [0, -0.25, 0.25, -0.5, 0.5, -0.75, 0.75, -1, 1]) {
         candidatas.push({ lado: 'dir', x: cx + G, y: cy - h / 2 + h * dy })
         candidatas.push({ lado: 'esq', x: cx - G - w, y: cy - h / 2 + h * dy })
       }
-      for (const dx of [0, -0.34, 0.34, -0.5, 0.5]) {
+      for (const dx of [0, -0.25, 0.25, -0.5, 0.5, -0.75, 0.75, -1, 1]) {
         candidatas.push({ lado: 'baixo', x: cx - w / 2 + w * dx, y: cy + G })
         candidatas.push({ lado: 'cima', x: cx - w / 2 + w * dx, y: cy - G - h })
       }
-      candidatas.push({ lado: 'esq', x: -G - w, y: cy - h / 2, fora: true })
+      // A minha própria mancha, para não me sentar em cima dela: era o que acontecia
+      // em Leiria, em Lisboa e em Portalegre, onde o prender empurrava o painel de
+      // volta para o centróide que ele devia estar a apontar.
+      const propria = (() => {
+        let bb; try { bb = a.p.getBBox() } catch { return { x: cx, y: cy, w: 0, h: 0 } }
+        const ex = r.width / vb[2], ey = r.height / vb[3]
+        return { x: (bb.x - vb[0]) * ex - 4, y: (bb.y - vb[1]) * ey - 4,
+                 w: bb.width * ex + 8, h: bb.height * ey + 8 }
+      })()
+      // Prende ao ecrã em vez de rejeitar: num telemóvel de 390px quase nada cabe sem
+      // ser empurrado, e estar perto do sítio vale mais do que estar bem centrado.
+      // A barra do topo é fixa e opaca: um painel encostado ao topo do ecrã ficava
+      // por baixo dela, com o primeiro site escondido.
+      const topo = document.querySelector('.topo')
+      const alto = (topo ? topo.offsetHeight : 0) + 6
+      const prender = c => ({
+        ...c,
+        x: Math.min(Math.max(c.x, 6 - r.left), innerWidth - 6 - w - r.left),
+        y: Math.min(Math.max(c.y, alto - r.top), innerHeight - 6 - h - r.top),
+      })
       const outros = caixasDosOutros(a)
-      let escolhida = null
+      // Pontua todas as candidatas em vez de ficar com a primeira que sirva: assim há
+      // sempre resposta, e a resposta é a menos má. Tapar a mancha em que se carregou
+      // está fora de questão; tapar um vizinho pesa muito; a seguir, ficar perto.
+      let escolhida = null, melhor = Infinity
       for (const c of candidatas) {
-        // dentro do ecrã?
-        const eX = r.left + c.x, eY = r.top + c.y
-        if (eX < 6 || eX + w > innerWidth - 6) continue
-        if (eY < 6 || eY + h > innerHeight - 6) continue
-        // não tapa nenhuma outra mancha?
-        if (!c.fora && outros.some(o => cruza({ x: c.x, y: c.y, w, h }, o))) continue
-        escolhida = c; break
+        const p = prender(c), cx0 = { x: p.x, y: p.y, w, h }
+        if (cruza(cx0, propria)) continue
+        // A distância mede-se à MANCHA, não ao centróide: em Leiria, que é grande, o
+        // centróide fica a 57px de um painel que está encostado à mancha.
+        const dx = Math.max(p.x - (propria.x + propria.w), 0, propria.x - (p.x + w))
+        const dy = Math.max(p.y - (propria.y + propria.h), 0, propria.y - (p.y + h))
+        // Tapar um vizinho assinalado custa 120px de afastamento: no aglomerado de
+        // Aveiro há sítios onde não tapar ninguém obrigaria a atravessar meio mapa.
+        const nota = Math.hypot(dx, dy) + 120 * outros.filter(o => cruza(cx0, o)).length
+        if (nota < melhor) { melhor = nota; escolhida = p }
       }
-      if (!escolhida) {
-        // nenhuma serve: encosta à esquerda do mapa e prende ao ecrã
-        escolhida = { lado: 'esq', x: -G - w, y: Math.min(Math.max(cy - h / 2, 0), r.height - h) }
-      }
+      // Nenhuma escapa à própria mancha (só acontece se ela for maior do que o ecrã):
+      // fica onde couber, encostado.
+      if (!escolhida) escolhida = prender(candidatas[0])
       pa.style.left = Math.round(escolhida.x) + 'px'
       pa.style.top = Math.round(escolhida.y) + 'px'
-      pa.dataset.lado = escolhida.lado
+      // O lado sai da posição FINAL, não da candidata: depois de prender ao ecrã, uma
+      // candidata «cima» pode ter acabado à direita da mancha, e o bico apontava para
+      // o lado errado. Ganha a folga maior.
+      const folgas = [
+        ['dir', escolhida.x - (propria.x + propria.w)],
+        ['esq', propria.x - (escolhida.x + w)],
+        ['baixo', escolhida.y - (propria.y + propria.h)],
+        ['cima', propria.y - (escolhida.y + h)],
+      ].filter(([, v]) => v >= 0).sort((a, b) => b[1] - a[1])
+      pa.dataset.lado = folgas.length ? folgas[0][0] : escolhida.lado
       // o bico aponta ao centróide, mesmo quando o painel foi empurrado
       if (escolhida.lado === 'dir' || escolhida.lado === 'esq') {
         pa.style.setProperty('--bico', Math.round(Math.min(Math.max(cy - escolhida.y, 12), h - 12)) + 'px')
@@ -278,9 +305,6 @@ if (grelha) {
 
     function abrir (concelho, comFoco = false) {
       abertoEm = concelho
-      // em ecrã estreito o painel e o botão de subir ocupam o mesmo canto
-      if (concelho) document.body.setAttribute('data-painel', '')
-      else document.body.removeAttribute('data-painel')
       for (const pa of paineis) pa.hidden = pa.dataset.concelho !== concelho
       for (const a of alvos) {
         const seu = a.c === concelho
@@ -289,13 +313,7 @@ if (grelha) {
         else a.p.removeAttribute('data-aberto')
       }
       if (!concelho) return
-      // Em ecrã estreito o painel fica por baixo do mapa, que ocupa quase toda a
-      // altura: abria fora do ecrã e ninguém o via. Só rola se for preciso.
       const pa = document.getElementById('p-' + concelho)
-      if (pa && !matchMedia('(min-width:900px)').matches) {
-        const r = pa.getBoundingClientRect()
-        if (r.bottom > innerHeight - 8 || r.top < 0) pa.scrollIntoView({ block: 'nearest' })
-      }
       if (comFoco) {
         const liga = pa && pa.querySelector('a')
         if (liga) liga.focus()

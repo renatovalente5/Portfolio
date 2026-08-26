@@ -416,11 +416,6 @@ const html = `<!doctype html>
  <p>Mapa: Carta Administrativa Oficial de Portugal, DGT.</p>
 </footer>
 
-${(TEL || WA) ? `<div class="accao">${[
-  TEL ? `<a href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : '',
-  WA ? `<a href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp</a>` : '',
-].filter(Boolean).join('')}</div>` : ''}
-
 <button class="subir" type="button" hidden>
  <span class="rl">Voltar ao topo da página</span><span aria-hidden="true">↑</span>
 </button>
@@ -429,6 +424,15 @@ ${(TEL || WA) ? `<div class="accao">${[
 </body>
 </html>
 `
+
+// Guarda contra o que já me aconteceu três vezes hoje: mexer no modelo e levar com
+// ele um elemento de que o CSS ou o JS dependem, sem nada avisar. Se um destes
+// desaparecer, o build morre aqui em vez de publicar uma página meio quebrada.
+for (const peca of [
+  'class="subir"', 'class="mapa-caixa"', 'class="mapa-cima"', 'class="conc-lista"',
+  'class="painel"', 'class="painel-x"', 'class="fita"', 'class="trabalhos"',
+  'id="contacto"', 'class="rodape"',
+]) if (!html.includes(peca)) falha(`o modelo perdeu ${peca} — o CSS e o JS contam com ele`)
 
 // resolver __BASE__ a partir do CNAME, se existir
 const cname = existsSync(join(RAIZ, 'CNAME')) ? readFileSync(join(RAIZ, 'CNAME'), 'utf8').trim() : ''
