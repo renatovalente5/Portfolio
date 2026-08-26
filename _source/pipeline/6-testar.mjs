@@ -255,6 +255,45 @@ async function main () {
   ok('o hover abre o painel, sem clicar', hov.aberto === 'santa-maria-da-feira', `aberto=${hov.aberto}`)
   ok('o painel lista os 5 sites de Santa Maria da Feira', hov.sites === 5, `${hov.sites} sites`)
   ok('o painel fica dentro do ecrã', hov.noEcra === true)
+
+  // O painel tem de aparecer AO LADO da mancha, não a meio do ecrã. Mede-se a
+  // distância do centróide à aresta mais próxima do painel, nos doze concelhos.
+  const lados = []
+  for (const c of await ev(`[...document.querySelectorAll('.mapa-cima .conc path')].map(p=>p.dataset.concelho)`)) {
+    const q = await pontoDe(c)
+    await rato(q.x, q.y); await sleep(300)
+    lados.push(await ev(`(()=>{
+      const pa=[...document.querySelectorAll('.painel')].filter(x=>!x.hidden)[0];
+      if(!pa) return {c:${JSON.stringify(c)}, dist:99999};
+      const b=pa.getBoundingClientRect();
+      const cx=document.querySelector('.mapa-caixa'), s=document.querySelector('.mapa-cima');
+      const vb=s.getAttribute('viewBox').split(/\\s+/).map(Number); const rc=cx.getBoundingClientRect();
+      const p=s.querySelector('.conc path[data-concelho="'+pa.dataset.concelho+'"]');
+      const px=rc.left+(+p.dataset.cx-vb[0])/vb[2]*rc.width, py=rc.top+(+p.dataset.cy-vb[1])/vb[3]*rc.height;
+      const dx=Math.max(b.left-px,0,px-b.right), dy=Math.max(b.top-py,0,py-b.bottom);
+      let tapa=null;
+      for (const o of s.querySelectorAll('.conc path')) {
+        if (o.dataset.concelho===pa.dataset.concelho) continue;
+        const bb=o.getBBox();
+        const ox=rc.left+(bb.x-vb[0])/vb[2]*rc.width, oy=rc.top+(bb.y-vb[1])/vb[3]*rc.height;
+        const ow=bb.width/vb[2]*rc.width, oh=bb.height/vb[3]*rc.height;
+        if (b.left<ox+ow && b.right>ox && b.top<oy+oh && b.bottom>oy) { tapa=o.dataset.concelho; break }
+      }
+      return {c:pa.dataset.concelho, dist:Math.round(Math.hypot(dx,dy)), tapa,
+              noEcra:b.left>=0&&b.right<=innerWidth&&b.top>=0&&b.bottom<=innerHeight,
+              lado:pa.dataset.lado}})()`))
+  }
+  const longe = lados.filter(l => l.dist > 30)
+  const tapam = lados.filter(l => l.tapa)
+  const fora = lados.filter(l => !l.noEcra)
+  ok(`o painel abre AO LADO da mancha nos ${lados.length} concelhos`, longe.length === 0,
+     longe.map(l => `${l.c} a ${l.dist}px`).join(', '))
+  ok('e não tapa nenhum outro concelho assinalado', tapam.length === 0,
+     tapam.map(l => `${l.c} tapa ${l.tapa}`).join(', '))
+  ok('e nunca sai do ecrã', fora.length === 0, fora.map(l => l.c).join(', '))
+  ok('o bico aponta para a mancha (lado definido em todos)',
+     lados.every(l => ['dir','esq','cima','baixo'].includes(l.lado)),
+     lados.filter(l => !l.lado).map(l => l.c).join(', '))
   // e passar para outro concelho troca
   const lis = await pontoDe('lisboa')
   await rato(lis.x, lis.y); await sleep(500)

@@ -256,25 +256,32 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 .painel-t b{
   font:400 .6875rem/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--tinta-3)
 }
-.painel ul{list-style:none;margin:8px 0 0;padding:0;display:grid}
-.painel li{display:grid;gap:1px;padding:7px 0;border-top:1px solid var(--fio)}
+.painel ul{list-style:none;margin:6px 0 0;padding:0;display:grid}
+.painel li{padding:5px 0;border-top:1px solid var(--fio)}
 .painel li a{
-  display:flex;align-items:baseline;gap:6px;min-height:24px;
-  font-size:.9375rem;font-weight:600;color:var(--mt);text-decoration:none
+  display:flex;align-items:baseline;gap:5px;min-height:24px;
+  font-size:.875rem;font-weight:600;color:var(--mt);text-decoration:none;line-height:1.25
 }
-.painel li a span{font-size:.75rem;font-weight:400}
+.painel li a span{font-size:.6875rem;font-weight:400}
 .painel li a:hover{text-decoration:underline}
-.painel li>span{font:400 .6875rem/1.4 var(--mono);color:var(--tinta-3)}
+.painel li>span{
+  display:block;font:400 .625rem/1.35 var(--mono);color:var(--tinta-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
 @media (min-width:900px){
-  /* ao lado do mapa, alinhado com o concelho, sem lhe tocar */
-  .painel{
-    position:absolute;z-index:4;margin:0;width:250px;
-    right:calc(100% + 16px);transform:translateY(-50%)
+  /* Ao lado da MANCHA, não do mapa. O JS escolhe entre quatro posições em volta do
+     centróide a primeira que caiba no ecrã e não tape nenhum dos outros concelhos
+     assinalados; só se nenhuma servir é que sai para fora do mapa. */
+  .painel{position:absolute;z-index:4;margin:0;width:216px}
+  .painel::after{   /* bico a apontar à mancha */
+    content:"";position:absolute;width:8px;height:8px;
+    background:var(--superficie);border:1px solid var(--fio);
+    border-right:0;border-bottom:0
   }
-  .painel::after{   /* fio até à mancha */
-    content:"";position:absolute;top:50%;left:100%;width:16px;height:1px;
-    background:var(--fio)
-  }
+  .painel[data-lado="dir"]::after{left:-5px;top:var(--bico,50%);transform:translateY(-50%) rotate(-45deg)}
+  .painel[data-lado="esq"]::after{right:-5px;top:var(--bico,50%);transform:translateY(-50%) rotate(135deg)}
+  .painel[data-lado="baixo"]::after{top:-5px;left:var(--bico,50%);transform:translateX(-50%) rotate(45deg)}
+  .painel[data-lado="cima"]::after{bottom:-5px;left:var(--bico,50%);transform:translateX(-50%) rotate(-135deg)}
 }
 .painel-x{
   position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;

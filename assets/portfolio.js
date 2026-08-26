@@ -198,14 +198,82 @@ if (grelha) {
     }
 
     /* abrir — o painel com os sites do concelho */
+
+    // As caixas dos outros concelhos assinalados, em píxeis da caixa do mapa. É contra
+    // estas que se testa cada posição candidata: o painel pode tapar cinzento, nunca
+    // outra mancha.
+    function caixasDosOutros (excepto) {
+      const r = caixa.getBoundingClientRect()
+      const ex = r.width / vb[2], ey = r.height / vb[3]
+      const out = []
+      for (const a of alvos) {
+        if (a === excepto) continue
+        let bb; try { bb = a.p.getBBox() } catch { continue }
+        out.push({
+          x: (bb.x - vb[0]) * ex, y: (bb.y - vb[1]) * ey,
+          w: bb.width * ex, h: bb.height * ey,
+        })
+      }
+      return out
+    }
+    const cruza = (a, b) =>
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+
     function posicionar (a) {
-      if (!a.painel) return
-      if (!matchMedia('(min-width:900px)').matches) { a.painel.style.top = ''; return }
+      const pa = a.painel
+      if (!pa) return
+      if (!matchMedia('(min-width:900px)').matches) {
+        pa.style.left = pa.style.top = ''
+        pa.removeAttribute('data-lado'); pa.style.removeProperty('--bico')
+        return
+      }
       const r = caixa.getBoundingClientRect()
       if (!r.height) return
-      const py = (a.cy - vb[1]) / vb[3] * 100
-      const meio = a.painel.offsetHeight / 2 / r.height * 100
-      a.painel.style.top = Math.min(Math.max(py, meio), 100 - meio).toFixed(2) + '%'
+      // o painel tem de estar visível para se medir
+      const w = pa.offsetWidth, h = pa.offsetHeight
+      const cx = (a.cx - vb[0]) / vb[2] * r.width
+      const cy = (a.cy - vb[1]) / vb[3] * r.height
+      const G = 16   // afastamento da mancha
+
+      // Posições em volta do centróide. Primeiro os lados, centrados; depois os
+      // mesmos lados deslizados para cima e para baixo; depois abaixo e acima, também
+      // deslizados. Só quando nada disto couber é que o painel sai do mapa — no
+      // aglomerado de Aveiro há concelhos cercados por vizinhos assinalados de todos
+      // os lados, e é melhor deslizar 40% do que fugir 150px.
+      const candidatas = []
+      for (const dy of [0, -0.34, 0.34, -0.5, 0.5]) {
+        candidatas.push({ lado: 'dir', x: cx + G, y: cy - h / 2 + h * dy })
+        candidatas.push({ lado: 'esq', x: cx - G - w, y: cy - h / 2 + h * dy })
+      }
+      for (const dx of [0, -0.34, 0.34, -0.5, 0.5]) {
+        candidatas.push({ lado: 'baixo', x: cx - w / 2 + w * dx, y: cy + G })
+        candidatas.push({ lado: 'cima', x: cx - w / 2 + w * dx, y: cy - G - h })
+      }
+      candidatas.push({ lado: 'esq', x: -G - w, y: cy - h / 2, fora: true })
+      const outros = caixasDosOutros(a)
+      let escolhida = null
+      for (const c of candidatas) {
+        // dentro do ecrã?
+        const eX = r.left + c.x, eY = r.top + c.y
+        if (eX < 6 || eX + w > innerWidth - 6) continue
+        if (eY < 6 || eY + h > innerHeight - 6) continue
+        // não tapa nenhuma outra mancha?
+        if (!c.fora && outros.some(o => cruza({ x: c.x, y: c.y, w, h }, o))) continue
+        escolhida = c; break
+      }
+      if (!escolhida) {
+        // nenhuma serve: encosta à esquerda do mapa e prende ao ecrã
+        escolhida = { lado: 'esq', x: -G - w, y: Math.min(Math.max(cy - h / 2, 0), r.height - h) }
+      }
+      pa.style.left = Math.round(escolhida.x) + 'px'
+      pa.style.top = Math.round(escolhida.y) + 'px'
+      pa.dataset.lado = escolhida.lado
+      // o bico aponta ao centróide, mesmo quando o painel foi empurrado
+      if (escolhida.lado === 'dir' || escolhida.lado === 'esq') {
+        pa.style.setProperty('--bico', Math.round(Math.min(Math.max(cy - escolhida.y, 12), h - 12)) + 'px')
+      } else {
+        pa.style.setProperty('--bico', Math.round(Math.min(Math.max(cx - escolhida.x, 12), w - 12)) + 'px')
+      }
     }
 
     function abrir (concelho, comFoco = false) {
