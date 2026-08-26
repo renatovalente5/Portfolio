@@ -45,10 +45,12 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   sob o nome do concelho quando está aceso.
 - **Capturas reais.** Cada cartão mostra o site em desktop e em telemóvel, dentro de
   uma moldura de browser com o **endereço verdadeiro** — para o visitante ir verificar.
-- **«Em desenvolvimento».** Os sites que ainda estão em `renatovalente5.github.io/…`
-  em vez do domínio final do cliente levam a etiqueta dentro da barra de endereço da
-  moldura, ao lado do endereço. É uma coisa sobre o endereço, não sobre o trabalho.
-  Deriva de `em_desenvolvimento` em `data/trabalhos.json`.
+- **«Em desenvolvimento», com dois sinais.** Os sites que ainda estão em
+  `renatovalente5.github.io/…` em vez do domínio final do cliente levam (a) a etiqueta
+  na barra de endereço da moldura, em tinta cheia sobre papel, e (b) o **filete do
+  cartão tracejado**. O segundo é o que permite ver *quais* de relance, sem ler nada —
+  a etiqueta sozinha, a 0,625 rem, passava despercebida. Sem cor nova: a paleta
+  continua fechada. Deriva de `em_desenvolvimento` em `data/trabalhos.json`.
 - **Botão de subir** no canto inferior direito, que aparece depois de o herói sair do
   ecrã. Sem ouvir o `scroll`: um `IntersectionObserver` sobre o herói, que já existe —
   e nunca um sentinela em `vh`, que cresce quando alguém estica o ecrã.
@@ -196,9 +198,20 @@ de traço fino dá mais altura.
 
 Nenhuma contagem precisa de ser tocada: são todas recalculadas.
 
+## A ordem dos trabalhos
+
+**A ordem da página é, exactamente, a ordem do array em `data/trabalhos.json`.** O build
+não ordena nada — `const ordenados = [...trabalhos]` e mais nada. Está semeada de norte
+para sul (por latitude), com o Praiómetro, que não tem concelho, no fim.
+
+Para mudar: no backoffice, arrastar os itens da lista pelo puxador à esquerda. O Pages
+CMS usa `@dnd-kit/sortable` no formulário de entrada (confirmado no código do projecto,
+em `components/entry/entry-form.tsx`, embora não esteja nos docs). A fita e a grelha
+saem sempre da mesma lista, por isso nunca se desencontram.
+
 ## O botão de gestão
 
-No rodapé há uma ligação discreta, **Gestão**, para `app.pagescms.org`. É só um atalho:
+No rodapé, ao lado do telemóvel: **Gestão**, para `app.pagescms.org`. É só um atalho —
 quem não estiver autenticado e sem a app instalada no repositório não vê nada.
 
 ## Quando um site passar para o domínio final

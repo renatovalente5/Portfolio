@@ -118,7 +118,7 @@ async function main () {
     imgsSemDim: [...document.images].filter(i=>!i.getAttribute('width')||!i.getAttribute('height')).length,
     github: document.body.innerHTML.includes('github.com'),
     dgt: document.body.textContent.includes('DGT'),
-    gestao: !!document.querySelector('.rod-gestao a'),
+    gestao: !!document.querySelector('.rodape .gestao'),
     topoWa: (document.querySelector('.topo-tel')||{}).href||'',
     numeroContacto: (document.querySelector('.cx-num')||{}).href||'',
   }))()`)
@@ -136,6 +136,45 @@ async function main () {
   ok('botão de gestão presente', est.gestao)
   ok('botão da cabeça vai para o WhatsApp', est.topoWa.includes('wa.me/'), est.topoWa)
   ok('número do contacto é uma ligação tel:', est.numeroContacto.startsWith('tel:'), est.numeroContacto)
+  const rod = await ev(`(()=>{const p=document.querySelector('.rodape .rod-1');
+    return {texto:p.textContent.replace(/\\s+/g,' ').trim(),
+            gestaoNaMesmaLinha: !!p.querySelector('.gestao'),
+            gestaoHref:(p.querySelector('.gestao')||{}).href||''}})()`)
+  ok('Gestão está na mesma linha do telemóvel', rod.gestaoNaMesmaLinha, rod.texto)
+  ok('Gestão aponta para o Pages CMS', rod.gestaoHref.includes('pagescms.org'), rod.gestaoHref)
+
+  const dev = await ev(`(()=>{
+    const marcados=[...document.querySelectorAll('.ficha--dev')].map(f=>f.dataset.id);
+    const comEtiqueta=[...document.querySelectorAll('.ficha')].filter(f=>f.querySelector('.moldura em')).map(f=>f.dataset.id);
+    const f=document.querySelector('.ficha--dev .filete');
+    const g=document.querySelector('.ficha:not(.ficha--dev) .filete');
+    const cs=getComputedStyle(f);
+    const et=getComputedStyle(document.querySelector('.moldura em'));
+    return {marcados, comEtiqueta,
+      fileteTracejado: cs.backgroundImage.includes('repeating-linear-gradient'),
+      filetePublicadoLiso: getComputedStyle(g).backgroundImage === 'none',
+      etiquetaContraste: et.backgroundColor, etiquetaCor: et.color, peso: et.fontWeight}})()`)
+  ok('7 cartões marcados como em desenvolvimento', dev.marcados.length === 7, `${dev.marcados.length}`)
+  ok('a marca do cartão e a etiqueta coincidem',
+     JSON.stringify(dev.marcados.slice().sort()) === JSON.stringify(dev.comEtiqueta.slice().sort()))
+  ok('o filete é tracejado nos que estão em desenvolvimento', dev.fileteTracejado)
+  ok('e liso nos que já estão publicados', dev.filetePublicadoLiso)
+  ok('a etiqueta tem contraste a sério (tinta cheia)',
+     dev.peso === '600' && dev.etiquetaBackgroundOk !== false, `peso ${dev.peso}, fundo ${dev.etiquetaContraste}`)
+
+  const ordem = await ev(`(async()=>{
+    const r = await fetch('data/trabalhos.json'); if(!r.ok) return null;
+    const dados = (await r.json()).filter(x=>x.visivel!==false).map(x=>x.nome);
+    const pagina = [...document.querySelectorAll('.ficha h3 a')].map(a=>a.textContent.replace(/ — abre.*/,'').trim());
+    const fita = [...document.querySelectorAll('#fita i')].map(i=>i.dataset.id);
+    const ids = [...document.querySelectorAll('.ficha')].map(f=>f.dataset.id);
+    return {iguais: JSON.stringify(dados)===JSON.stringify(pagina), primeiros: pagina.slice(0,3),
+            fitaSegueGrelha: JSON.stringify(fita)===JSON.stringify(ids)}})()`)
+  if (ordem === null) ok('a ordem da página é a do ficheiro (não verificável no site vivo)', true)
+  else {
+    ok('a ordem da página é EXACTAMENTE a do data/trabalhos.json', ordem.iguais, JSON.stringify(ordem.primeiros))
+    ok('a fita segue a mesma ordem da grelha', ordem.fitaSegueGrelha)
+  }
 
   // ═══ 2. FILTRO POR SECTOR ═════════════════════════════════════════════════
   console.log('\n── filtro por sector')

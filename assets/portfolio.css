@@ -331,6 +331,12 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
   position:absolute;inset:0 0 auto;height:3px;background:var(--m);
   border-radius:3px 3px 0 0;transition:transform .18s ease
 }
+/* Sinal de estado que se lê sem se ler: nos que ainda não têm domínio final o filete
+   é tracejado. Visível de relance em toda a grelha, e sem introduzir cor nova. */
+.ficha--dev .filete{
+  background:repeating-linear-gradient(90deg,
+    var(--m) 0 9px, transparent 9px 15px)
+}
 /* chegada por âncora: sinal de posição, estático */
 .ficha:target{border-color:var(--mt)}
 .ficha:target .filete{transform:scaleY(2);transform-origin:top}
@@ -355,12 +361,13 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
    vive ao lado dele, em cinzento neutro e nunca na cor da marca do cliente. */
 .moldura em{
   flex:0 0 auto;margin-left:auto;display:inline-flex;align-items:center;gap:5px;
-  font:400 .625rem/1 var(--mono);font-style:normal;letter-spacing:.02em;
-  color:var(--tinta-3);background:var(--papel);
-  border:1px solid var(--fio);border-radius:99px;padding:4px 8px;white-space:nowrap
+  font:600 .6875rem/1 var(--mono);font-style:normal;letter-spacing:.01em;
+  color:var(--papel);background:var(--tinta);
+  border-radius:99px;padding:5px 9px;white-space:nowrap
 }
 .moldura em::before{
-  content:"";width:5px;height:5px;border-radius:50%;background:var(--tinta-3);flex:0 0 auto
+  content:"";width:5px;height:5px;border-radius:50%;
+  background:var(--papel);opacity:.6;flex:0 0 auto
 }
 .ecra{
   display:block;width:100%;height:auto;aspect-ratio:16/10;
@@ -448,12 +455,11 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 .rodape b{color:var(--tinta);font-weight:400}
 .rodape p+p{margin-top:8px;max-width:64ch}
 .rodape a{display:inline-block;min-height:26px;padding:4px 0}
-.rod-gestao{margin-top:16px}
-.rod-gestao a{
-  font-size:.75rem;color:var(--tinta-3);text-decoration:none;
-  border:1px dashed var(--fio);border-radius:99px;padding:6px 12px;min-height:30px
+.rodape .gestao{
+  margin-left:2px;color:var(--tinta-3);text-decoration:none;
+  border:1px dashed var(--fio);border-radius:99px;padding:5px 11px;min-height:28px
 }
-.rod-gestao a:hover{color:var(--tinta);border-color:var(--tinta-3);border-style:solid}
+.rodape .gestao:hover{color:var(--tinta);border-color:var(--tinta-3);border-style:solid}
 
 /* ═══ botões fixos ════════════════════════════════════════════════════════ */
 .subir{
@@ -535,6 +541,8 @@ body:has(.accao) .subir{
   .subir{color:CanvasText;border:1px solid CanvasText}
   .ficha{border:1px solid CanvasText}
   .ficha .filete{background:CanvasText}
+  .ficha--dev .filete{background:GrayText}
+  .moldura em{background:CanvasText;color:Canvas;border:1px solid CanvasText}
   .ficha:target{outline:2px solid Highlight;outline-offset:-2px}
   .moldura,.ecra,.tel,.placa{border-color:CanvasText}
   .fita{border-bottom:1px solid CanvasText}

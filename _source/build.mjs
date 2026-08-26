@@ -116,13 +116,11 @@ for (const t of trabalhos) {
 }
 const famOrd = [...fam.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'pt'))
 
-// ── 4. ORDEM: norte -> sul por latitude; sem concelho vai para o fim ────────
-const ordenados = [...trabalhos].sort((a, b) => {
-  if (a.lat == null && b.lat == null) return a.nome.localeCompare(b.nome, 'pt')
-  if (a.lat == null) return 1
-  if (b.lat == null) return -1
-  return b.lat - a.lat || a.nome.localeCompare(b.nome, 'pt')
-})
+// ── 4. ORDEM: é a ordem do ficheiro data/trabalhos.json, e mais nada ────────
+// Assim o Renato manda na ordem: no backoffice arrastam-se os itens da lista (o Pages
+// CMS usa @dnd-kit/sortable no formulário de entrada) e a página segue.
+// O ficheiro está semeado em norte→sul, com o Praiómetro — que não tem concelho — no fim.
+const ordenados = [...trabalhos]
 
 // O primeiro cartão de cada concelho, na ordem em que a grelha o desenha (norte→sul).
 // É o destino da âncora do nome na lista.
@@ -221,7 +219,7 @@ function ficha (t) {
   const etiquetas = []
   if (t.loja) etiquetas.push('Loja online')
   const onde = t.concelho ? `${esc(t.localidade)}${t.localidade !== t.concelho ? ', ' + esc(t.concelho) : ''}` : esc(t.localidade)
-  return `<article class="ficha${largo}" id="t-${t.id}" data-id="${t.id}" data-sector="${t.sector}"` +
+  return `<article class="ficha${largo}${t.em_desenvolvimento ? ' ficha--dev' : ''}" id="t-${t.id}" data-id="${t.id}" data-sector="${t.sector}"` +
     ` data-concelho="${t.concelho ? slug(t.concelho) : ''}"` +
     ` style="--m:${t.marca};--mc:${t.marca_claro};--me:${t.marca_escuro}">
  <span class="filete"></span>
@@ -384,9 +382,9 @@ const html = `<!doctype html>
 </main>
 
 <footer class="rodape">
- <p><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}</p>
+ <p class="rod-1"><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}${
+   autor.github ? ` · <a class="gestao" href="https://app.pagescms.org" target="_blank" rel="noopener">Gestão</a>` : ''}</p>
  <p>Mapa: Carta Administrativa Oficial de Portugal, DGT.</p>
- <p class="rod-gestao"><a href="https://app.pagescms.org" target="_blank" rel="noopener">Gestão</a></p>
 </footer>
 
 ${(TEL || WA) ? `<div class="accao">${[

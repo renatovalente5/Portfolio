@@ -20,8 +20,13 @@ content:
     label: Trabalhos
     path: data/trabalhos.json
     type: file
+    format: json
     list: true
     icon: layout-grid
+    description: >-
+      A ORDEM DESTA LISTA É A ORDEM DA PÁGINA. Arrasta pelo puxador à esquerda de
+      cada item para mudar. Está semeada de norte para sul, com o Praiómetro — que
+      não tem concelho — no fim.
     view:
       fields: [nome, actividade, concelho, visivel]
       primary: nome
@@ -178,6 +183,7 @@ content:
     label: Os meus contactos
     path: data/autor.json
     type: file
+    format: json
     icon: user
     fields:
       - name: nome
