@@ -212,17 +212,19 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 }
 /* Os nomes são âncoras verdadeiras para o primeiro cartão do concelho: é assim que
    quem usa teclado ou telemóvel — onde não há rato — chega ao mesmo sítio. */
-.conc-lista a{
+.conc-lista .cn{
   display:inline-block;padding:11px 2px;   /* 45px de alvo de toque */
-  color:var(--tinta-2);text-decoration:none;
+  background:none;border:0;cursor:pointer;font:inherit;
+  color:var(--tinta-2);text-align:left;
   box-shadow:inset 0 -2px 0 transparent;
   transition:color .16s ease,box-shadow .16s ease
 }
-.conc-lista li[data-activo]:not([data-perto]) a,
-.conc-lista li[data-perto] a,
-.conc-lista a:hover,
-.conc-lista a:focus-visible{color:var(--tinta);box-shadow:inset 0 -2px 0 var(--mt,currentColor)}
-.conc-lista a:not([href]){color:var(--tinta-3);cursor:default;box-shadow:none}
+.conc-lista li[data-activo]:not([data-perto]) .cn,
+.conc-lista li[data-perto] .cn,
+.conc-lista .cn:hover,
+.conc-lista .cn:focus-visible,
+.conc-lista .cn[aria-expanded="true"]{color:var(--tinta);box-shadow:inset 0 -2px 0 var(--mt,currentColor)}
+.conc-lista .cn[aria-expanded="true"]{font-weight:600}
 
 .mapa{margin:0}
 .mapa-caixa{
@@ -237,6 +239,49 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 @media (hover:hover) and (pointer:fine){.mapa-caixa{cursor:crosshair}}
 .mapa-caixa[data-mostra]{cursor:pointer}
 .mapa-cima{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+
+/* O painel de um concelho: abre ao carregar na mancha e lista os sites de lá.
+   NÃO fica sobre o mapa. O de Santa Maria da Feira tem cinco sites e 347px de altura:
+   ancorado no centróide, tapava Leiria e Lisboa. Fica AO LADO, à altura do concelho,
+   onde a coluna do texto tem espaço de sobra — e no telemóvel fica por baixo do mapa,
+   em fluxo normal, sem geometria nenhuma para calcular. */
+.painel{
+  margin-top:18px;padding:12px 14px 10px;border-radius:12px;position:relative;
+  background:var(--superficie);border:1px solid var(--fio);box-shadow:var(--sombra-2)
+}
+.painel-t{
+  display:flex;align-items:baseline;gap:7px;padding-right:22px;
+  font-size:.9375rem;font-weight:600;color:var(--tinta)
+}
+.painel-t b{
+  font:400 .6875rem/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--tinta-3)
+}
+.painel ul{list-style:none;margin:8px 0 0;padding:0;display:grid}
+.painel li{display:grid;gap:1px;padding:7px 0;border-top:1px solid var(--fio)}
+.painel li a{
+  display:flex;align-items:baseline;gap:6px;min-height:24px;
+  font-size:.9375rem;font-weight:600;color:var(--mt);text-decoration:none
+}
+.painel li a span{font-size:.75rem;font-weight:400}
+.painel li a:hover{text-decoration:underline}
+.painel li>span{font:400 .6875rem/1.4 var(--mono);color:var(--tinta-3)}
+@media (min-width:900px){
+  /* ao lado do mapa, alinhado com o concelho, sem lhe tocar */
+  .painel{
+    position:absolute;z-index:4;margin:0;width:250px;
+    right:calc(100% + 16px);transform:translateY(-50%)
+  }
+  .painel::after{   /* fio até à mancha */
+    content:"";position:absolute;top:50%;left:100%;width:16px;height:1px;
+    background:var(--fio)
+  }
+}
+.painel-x{
+  position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;
+  background:none;border:0;color:var(--tinta-3);font-size:1.125rem;line-height:1
+}
+.painel-x:hover{color:var(--tinta);background:var(--papel-2)}
 .mapa-cima .conc path{
   fill:var(--m,var(--tinta-3));stroke:var(--papel);stroke-width:1.6;
   paint-order:stroke fill markers;   /* auréola exterior: não come a mancha */
@@ -244,7 +289,6 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
   transition:opacity .22s ease,transform .18s cubic-bezier(.2,.8,.2,1),
              stroke-width .18s ease,stroke .18s ease
 }
-.mapa-cima .conc path[data-fora]{opacity:.24}
 /* o :not() fixa a precedência por propriedade: o ponteiro ganha sempre ao scroll */
 .mapa-cima .conc path[data-activo]:not([data-perto]){transform:scale(1.18);stroke-width:3}
 .mapa-cima .conc path[data-perto]{transform:scale(1.2);stroke:var(--tinta);stroke-width:5}
@@ -404,6 +448,12 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
 .rodape b{color:var(--tinta);font-weight:400}
 .rodape p+p{margin-top:8px;max-width:64ch}
 .rodape a{display:inline-block;min-height:26px;padding:4px 0}
+.rod-gestao{margin-top:16px}
+.rod-gestao a{
+  font-size:.75rem;color:var(--tinta-3);text-decoration:none;
+  border:1px dashed var(--fio);border-radius:99px;padding:6px 12px;min-height:30px
+}
+.rod-gestao a:hover{color:var(--tinta);border-color:var(--tinta-3);border-style:solid}
 
 /* ═══ botões fixos ════════════════════════════════════════════════════════ */
 .subir{
@@ -418,6 +468,9 @@ main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:
   transition:opacity .2s ease,transform .2s ease,border-color .18s ease
 }
 .subir[data-ver]{opacity:1;transform:none;pointer-events:auto}
+/* o painel do concelho e o botão de subir disputam o mesmo canto em ecrã estreito */
+body[data-painel] .subir{opacity:0;pointer-events:none}
+@media (min-width:900px){body[data-painel] .subir[data-ver]{opacity:1;pointer-events:auto}}
 .subir:hover{border-color:var(--tinta-3)}
 
 .accao{
@@ -490,14 +543,16 @@ body:has(.accao) .subir{
   .fita[data-modo="todas"] i{background:CanvasText}
   .fita i[data-fora]{background:GrayText;opacity:.5}
   .chip[aria-pressed="true"]{background:Highlight;color:HighlightText;border-color:Highlight}
+  .painel{background:Canvas;border:1px solid CanvasText;box-shadow:none}
+  .painel li a{color:LinkText}
   .mapa-cima .conc path{fill:CanvasText;stroke:Canvas}
   .mapa-cima .conc path[data-perto],
   .mapa-cima .conc path[data-activo]{fill:Highlight;stroke:CanvasText}
   /* o box-shadow não é pintado aqui: o risco tem de ser text-decoration */
-  .conc-lista a{color:LinkText}
-  .conc-lista li[data-perto] a,
-  .conc-lista li[data-activo] a{color:Highlight;text-decoration:underline}
-  .conc-lista a:not([href]){color:GrayText;text-decoration:none}
+  .conc-lista .cn{color:LinkText}
+  .conc-lista li[data-perto] .cn,
+  .conc-lista li[data-activo] .cn,
+  .conc-lista .cn[aria-expanded="true"]{color:Highlight;text-decoration:underline}
   .cx-num{color:LinkText;box-shadow:none;text-decoration:underline}
   .b--1,.accao a{background:CanvasText;color:Canvas;border:1px solid CanvasText}
   .b--2,.accao a+a{background:Canvas;color:CanvasText;border:1px solid CanvasText}

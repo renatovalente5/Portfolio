@@ -21,17 +21,19 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   Administrativa Oficial de Portugal (via `json.geoapi.pt`), projectados no build. Os
   12 concelhos com trabalho aparecem pintados com a cor da marca do cliente — e, onde
   há mais do que um trabalho no mesmo concelho, em faixas com as cores verdadeiras de
-  todos. **Não é filtro nem pesquisa.** Ao ponteiro, ganha o concelho cujo centróide
-  está mais perto do cursor — e não se testa se o ponto cai dentro de uma forma: no
-  aglomerado de Aveiro o polígono do vizinho grande envolve a mancha pequena, e apontar
-  a São João da Madeira (5×6 px de ecrã) devolveria Oliveira de Azeméis. O concelho
-  aceso cresce, o nome acende na lista, e clicar segue a mesma âncora do nome. Em toque
-  não há nada: o mapa ocupa ~85% da altura do ecrã e quase todo o arrasto para descer
-  começaria com o dedo lá dentro.
-- **Os doze nomes são âncoras** para o primeiro cartão de cada concelho, com a chegada
-  sinalizada em `:target`. É assim que quem usa teclado ou telemóvel chega ao mesmo
-  sítio: alvos de 45 px, e funcionam com o JS desligado. O salto é corrigido depois do
-  layout assentar, porque `content-visibility:auto` faz aterrar desviado à primeira.
+  todos. **O mapa nunca é filtrado** pelos chips de sector: é geografia, não é o estado
+  do filtro. Ao ponteiro, ganha o concelho cujo centróide está mais perto do cursor — e
+  não se testa se o ponto cai dentro de uma forma: no aglomerado de Aveiro o polígono do
+  vizinho grande envolve a mancha pequena, e apontar a São João da Madeira (5×6 px de
+  ecrã) devolveria Oliveira de Azeméis.
+- **Carregar no mapa abre um painel** com os sites daquele concelho — não vai direito a
+  nenhum deles. O painel fica **ao lado** do mapa acima de 900 px e **por baixo** dele em
+  ecrãs estreitos: ancorado no centróide, o de Santa Maria da Feira (cinco sites, 337 px
+  de altura) tapava Leiria e Lisboa.
+- **Um comportamento, dois gatilhos.** O alvo do rato e do dedo é a caixa do mapa toda;
+  o gatilho de teclado é o **nome do concelho**, que é um `<button>` de 45 px com
+  `aria-expanded`. As manchas do SVG são decoração (`aria-hidden`, sem `tabindex`):
+  torná-las focáveis dava alvos de 5×6 px e doze paradas de tabulação para o mesmo sítio.
 - **Traço com `paint-order: stroke fill`.** O traço é auréola exterior e não come a
   mancha: São João da Madeira passa de 3,9×5,0 px para 5,0×6,1 px, legível **sem gesto
   nenhum** — que é o único ganho que conta no telemóvel.
@@ -176,6 +178,11 @@ de traço fino dá mais altura.
 4. `node _source/build.mjs`
 
 Nenhuma contagem precisa de ser tocada: são todas recalculadas.
+
+## O botão de gestão
+
+No rodapé há uma ligação discreta, **Gestão**, para `app.pagescms.org`. É só um atalho:
+quem não estiver autenticado e sem a app instalada no repositório não vê nada.
 
 ## Quando um site passar para o domínio final
 

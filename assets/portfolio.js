@@ -94,11 +94,9 @@ if (grelha) {
       if (t && t.el.classList.contains('fora')) b.setAttribute('data-fora', '')
       else b.removeAttribute('data-fora')
     }
-    for (const p of concPaths) {
-      const tem = trabalhos.some(t => t.concelho === p.dataset.concelho && !t.el.classList.contains('fora'))
-      if (tem) p.removeAttribute('data-fora')
-      else p.setAttribute('data-fora', '')
-    }
+    // O mapa NÃO é filtrado: mostra sempre as cores de todas as localizações. É
+    // geografia, não é o estado do filtro — e o painel de cada concelho continua a
+    // listar todos os trabalhos de lá.
     // o que estava aceso pode ter saído do filtro
     porScroll = porScroll.filter(id => {
       const t = trabalhos.find(t => t.id === id)
@@ -130,27 +128,52 @@ if (grelha) {
     })
   }
 
-  /* ── o mapa ao ponteiro ──────────────────────────────────────────────────
+  /* ── o mapa: apontar e abrir ──────────────────────────────────────────────
      O alvo NÃO é o <path>: São João da Madeira tem 5×6 px de ecrã e seis dos doze
      concelhos vivem num aglomerado de ~18 px. Ganha o concelho cujo centróide está
-     mais perto do cursor — e NÃO se testa primeiro se o ponto cai dentro de uma
+     mais perto do cursor ou do dedo — e não se testa se o ponto cai dentro de uma
      forma: no aglomerado, o polígono do vizinho grande envolve a mancha pequena, e
      apontar a São João da Madeira devolveria Oliveira de Azeméis.
-     Só ponteiro fino: em toque, o mapa ocupa ~85% da altura do ecrã e quase todo o
-     arrasto para descer começaria com o dedo lá dentro. Quem não tem rato chega ao
-     mesmo sítio pelas âncoras dos nomes, que são alvos de 45 px.                  */
+
+     Carregar (ou tocar) ABRE UM PAINEL com os sites desse concelho. Não vai direito
+     a nenhum deles. O painel fica AO LADO do mapa acima de 900px e por baixo dele
+     em ecrãs estreitos: ancorado no centróide, o de Santa Maria da Feira — cinco
+     sites, 337px de altura — tapava Leiria e Lisboa.
+
+     As manchas são botões de verdade (role, tabindex, aria-expanded, nome
+     acessível), por isso isto funciona com teclado; e o mapa NUNCA é filtrado pelo
+     sector: é geografia, não é o estado do filtro.                              */
   const caixa = $('.mapa-caixa')
+  const svgMapa = $('.mapa-cima')
+  const paineis = $$('.painel')
   const fino = matchMedia('(hover:hover) and (pointer:fine)')
 
-  if (caixa && concPaths.length && fino.matches) {
-    const svgMapa = $('.mapa-cima')
+  if (caixa && svgMapa && concPaths.length) {
     const vb = svgMapa.getAttribute('viewBox').split(/\s+/).map(Number)
     const alvos = concPaths.map(p => ({
       p, c: p.dataset.concelho, cx: +p.dataset.cx, cy: +p.dataset.cy,
       li: itensLista.find(li => li.dataset.concelho === p.dataset.concelho) || null,
+      bt: document.querySelector(`.conc-lista li[data-concelho="${p.dataset.concelho}"] .cn`),
+      painel: document.getElementById('p-' + p.dataset.concelho) || null,
     }))
     let apontado = null
+    let abertoEm = null
 
+    function maisPerto (cx, cy) {
+      const r = caixa.getBoundingClientRect()
+      if (!r.width) return null
+      const x = vb[0] + (cx - r.left) / r.width * vb[2]
+      const y = vb[1] + (cy - r.top) / r.height * vb[3]
+      let melhor = null, d2 = Infinity
+      for (const a of alvos) {
+        const dd = (a.cx - x) ** 2 + (a.cy - y) ** 2
+        if (dd < d2) { d2 = dd; melhor = a }
+      }
+      // 120 unidades ≈ 70 km: mais longe do que isto e não se está a apontar a nada
+      return d2 <= 120 * 120 ? melhor : null
+    }
+
+    /* apontar — o realce ao passar (só ponteiro fino) */
     function apontar (alvo) {
       if (alvo === apontado) return
       apontado = alvo
@@ -166,52 +189,103 @@ if (grelha) {
       }
       if (alvo) caixa.setAttribute('data-mostra', '')
       else caixa.removeAttribute('data-mostra')
-      // e a fita acende as bandas dos trabalhos desse concelho
       porRato = alvo
         ? trabalhos.filter(t => t.concelho === alvo.c && !t.el.classList.contains('fora')).map(t => t.id)
         : null
       pintar()
     }
 
-    // O rect só se lê no início de cada movimento, e nunca depois de escrever
-    function maisPerto (ev) {
+    /* abrir — o painel com os sites do concelho */
+    function posicionar (a) {
+      if (!a.painel) return
+      if (!matchMedia('(min-width:900px)').matches) { a.painel.style.top = ''; return }
       const r = caixa.getBoundingClientRect()
-      if (!r.width) return null
-      const x = vb[0] + (ev.clientX - r.left) / r.width * vb[2]
-      const y = vb[1] + (ev.clientY - r.top) / r.height * vb[3]
-      let melhor = null, d2 = Infinity
-      for (const a of alvos) {
-        if (a.p.hasAttribute('data-fora')) continue   // fora do filtro, fora do alcance
-        const dd = (a.cx - x) ** 2 + (a.cy - y) ** 2
-        if (dd < d2) { d2 = dd; melhor = a }
-      }
-      // 120 unidades ≈ 70 km: mais longe do que isto e não se está a apontar a nada
-      return d2 <= 120 * 120 ? melhor : null
+      if (!r.height) return
+      const py = (a.cy - vb[1]) / vb[3] * 100
+      const meio = a.painel.offsetHeight / 2 / r.height * 100
+      a.painel.style.top = Math.min(Math.max(py, meio), 100 - meio).toFixed(2) + '%'
     }
 
-    caixa.addEventListener('pointermove', ev => {
-      if (ev.pointerType !== 'mouse') return
-      apontar(maisPerto(ev))
-    })
-    caixa.addEventListener('pointerleave', ev => {
-      if (ev.pointerType === 'mouse') apontar(null)
-    })
-    // Clicar no mapa segue a mesma âncora do nome: é redundante por construção, logo
-    // não há funcionalidade que exista só com rato.
+    function abrir (concelho, comFoco = false) {
+      abertoEm = concelho
+      // em ecrã estreito o painel e o botão de subir ocupam o mesmo canto
+      if (concelho) document.body.setAttribute('data-painel', '')
+      else document.body.removeAttribute('data-painel')
+      for (const pa of paineis) pa.hidden = pa.dataset.concelho !== concelho
+      for (const a of alvos) {
+        const seu = a.c === concelho
+        if (a.bt) a.bt.setAttribute('aria-expanded', String(seu))
+        if (seu) { a.p.setAttribute('data-aberto', ''); posicionar(a) }
+        else a.p.removeAttribute('data-aberto')
+      }
+      if (!concelho) return
+      // Em ecrã estreito o painel fica por baixo do mapa, que ocupa quase toda a
+      // altura: abria fora do ecrã e ninguém o via. Só rola se for preciso.
+      const pa = document.getElementById('p-' + concelho)
+      if (pa && !matchMedia('(min-width:900px)').matches) {
+        const r = pa.getBoundingClientRect()
+        if (r.bottom > innerHeight - 8 || r.top < 0) pa.scrollIntoView({ block: 'nearest' })
+      }
+      if (comFoco) {
+        const liga = pa && pa.querySelector('a')
+        if (liga) liga.focus()
+      }
+    }
+
+    /* carregar e tocar: funciona com rato e com dedo */
     caixa.addEventListener('click', ev => {
-      if (!apontado || !apontado.li) return
-      const a = apontado.li.querySelector('a[href]')
-      if (a) { ev.preventDefault(); a.click() }
+      if (ev.target.closest('.painel')) return
+      const a = maisPerto(ev.clientX, ev.clientY)
+      abrir(a && abertoEm !== a.c ? a.c : null)
+      if (a) ev.preventDefault()
     })
-    // passar o rato ou focar um nome acende a mancha, pelo mesmo caminho
+
+    /* o nome do concelho é o botão: alvo de 45px, funciona com teclado, e é o mesmo
+       painel que o clique no mapa abre. Um comportamento, dois gatilhos. */
     for (const a of alvos) {
-      if (!a.li) continue
-      const liga = a.li.querySelector('a')
-      if (!liga) continue
-      liga.addEventListener('pointerenter', () => apontar(a))
-      liga.addEventListener('focus', () => apontar(a))
-      liga.addEventListener('pointerleave', () => apontar(null))
-      liga.addEventListener('blur', () => apontar(null))
+      if (!a.bt) continue
+      a.bt.addEventListener('click', () => abrir(abertoEm === a.c ? null : a.c))
+    }
+    for (const pa of paineis) {
+      pa.querySelector('.painel-x').addEventListener('click', () => {
+        const c = pa.dataset.concelho
+        abrir(null)
+        const a = alvos.find(x => x.c === c)
+        if (a && a.bt) a.bt.focus()
+      })
+    }
+    addEventListener('keydown', ev => {
+      if (ev.key !== 'Escape' || !abertoEm) return
+      const c = abertoEm
+      abrir(null)
+      const a = alvos.find(x => x.c === c)
+      if (a && a.bt) a.bt.focus()
+    })
+    addEventListener('pointerdown', ev => {
+      if (!abertoEm) return
+      if (caixa.contains(ev.target) || ev.target.closest('.conc-lista')) return
+      abrir(null)
+    }, { passive: true })
+    addEventListener('resize', () => {
+      if (abertoEm) { const a = alvos.find(x => x.c === abertoEm); if (a) posicionar(a) }
+    })
+
+    /* o realce ao passar o rato, e o recíproco a partir dos nomes da lista */
+    if (fino.matches) {
+      caixa.addEventListener('pointermove', ev => {
+        if (ev.pointerType !== 'mouse') return
+        apontar(maisPerto(ev.clientX, ev.clientY))
+      })
+      caixa.addEventListener('pointerleave', ev => {
+        if (ev.pointerType === 'mouse') apontar(null)
+      })
+      for (const a of alvos) {
+        if (!a.bt) continue
+        a.bt.addEventListener('pointerenter', () => apontar(a))
+        a.bt.addEventListener('focus', () => apontar(a))
+        a.bt.addEventListener('pointerleave', () => apontar(null))
+        a.bt.addEventListener('blur', () => apontar(null))
+      }
     }
   }
 

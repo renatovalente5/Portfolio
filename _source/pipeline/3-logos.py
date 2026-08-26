@@ -129,10 +129,18 @@ def rasterizar(src, dest, altura, cor):
         f'--window-size={W},{altura}',f'--screenshot={dest}','file://'+str(html)], capture_output=True)
     return dest
 
+# Alturas de exibição, em px. Subidas depois de olhar para os dezoito ao tamanho real,
+# ampliados: a 24px os logótipos com estrutura interna viram mancha.
 def forma(r):
-    if r >= 2.6:  return 'largo', 18, 36
-    if r >= 1.15: return 'medio', 24, 42
-    return 'alto', 32, 50
+    if r >= 2.6:  return 'largo', 20, 38
+    if r >= 1.15: return 'medio', 28, 48
+    return 'alto', 36, 56
+
+# Altura própria, onde a regra do rácio não chega. Medido, não arbitrado:
+#   raf-matos — a casa tem portas de vão estreito; abaixo de 30px o vão fecha e a
+#               marca fica um borrão dourado. A 36px lê-se o azul das portas.
+ALTURA_FIXA = {'raf-matos': 36}
+TECTO_PLACA = 58
 
 dec = {}
 print(f'{"slug":22} {"ficheiro":26} {"placa":9} {"tinta":>6} {"rácio":>6}  forma  altura')
@@ -170,6 +178,12 @@ for slug, cands in CAND.items():
     if cob < 0.30:
         boost = min(1.42, 0.30 / max(cob, 0.10))
         hl = int(round(hl * boost)); hp = int(round(hp * boost))
+    if slug in ALTURA_FIXA:
+        hp = int(round(hp * ALTURA_FIXA[slug] / hl)); hl = ALTURA_FIXA[slug]
+    # Tecto: a captura do visor tem ~237px de altura num cartão de 380px. Uma placa
+    # acima de 58px come um quarto dela e passa a competir com o site do cliente.
+    if hp > TECTO_PLACA:
+        hl = max(16, int(round(hl * TECTO_PLACA / hp))); hp = TECTO_PLACA
     melhor.update(forma=fo, h_logo=hl, h_placa=hp, boost=round(hl/forma(melhor['racio'])[1], 2))
     dec[slug] = melhor
     av = '  ⚠' if melhor['perda'] > .30 else ''

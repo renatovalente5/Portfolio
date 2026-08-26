@@ -8,12 +8,12 @@
   "perda": 0.0228,
   "placa": "#FFFFFF",
   "forma": "largo",
-  "h_logo": 26,
-  "h_placa": 51,
-  "boost": 1.44,
-  "w_disp": 132,
-  "h_disp": 26,
-  "bytes": 8972
+  "h_logo": 28,
+  "h_placa": 54,
+  "boost": 1.4,
+  "w_disp": 142,
+  "h_disp": 28,
+  "bytes": 10226
  },
  "armazem-dos-pneus": {
   "slug": "armazem-dos-pneus",
@@ -24,12 +24,12 @@
   "perda": 0.4387,
   "placa": "#FFFFFF",
   "forma": "medio",
-  "h_logo": 24,
-  "h_placa": 42,
+  "h_logo": 28,
+  "h_placa": 48,
   "boost": 1.0,
-  "w_disp": 53,
-  "h_disp": 24,
-  "bytes": 5400
+  "w_disp": 62,
+  "h_disp": 28,
+  "bytes": 6234
  },
  "artstampcreations": {
   "slug": "artstampcreations",
@@ -40,12 +40,12 @@
   "perda": 0.6559,
   "placa": "#FFFFFF",
   "forma": "alto",
-  "h_logo": 32,
-  "h_placa": 50,
+  "h_logo": 36,
+  "h_placa": 56,
   "boost": 1.0,
-  "w_disp": 32,
-  "h_disp": 32,
-  "bytes": 4216
+  "w_disp": 36,
+  "h_disp": 36,
+  "bytes": 4994
  },
  "feira-norte-auto": {
   "slug": "feira-norte-auto",
@@ -58,7 +58,7 @@
   "forma": "medio",
   "h_logo": 33,
   "h_placa": 58,
-  "boost": 1.38,
+  "boost": 1.18,
   "w_disp": 55,
   "h_disp": 33,
   "bytes": 5568
@@ -73,8 +73,8 @@
   "placa": "#17191D",
   "forma": "medio",
   "h_logo": 34,
-  "h_placa": 60,
-  "boost": 1.42,
+  "h_placa": 58,
+  "boost": 1.21,
   "w_disp": 61,
   "h_disp": 34,
   "bytes": 3978
@@ -88,12 +88,12 @@
   "perda": 0.0116,
   "placa": "#FFFFFF",
   "forma": "medio",
-  "h_logo": 26,
-  "h_placa": 46,
-  "boost": 1.08,
-  "w_disp": 31,
-  "h_disp": 26,
-  "bytes": 1922
+  "h_logo": 31,
+  "h_placa": 53,
+  "boost": 1.11,
+  "w_disp": 37,
+  "h_disp": 31,
+  "bytes": 2410
  },
  "hv-limpezas": {
   "slug": "hv-limpezas",
@@ -104,12 +104,12 @@
   "perda": 0.2278,
   "placa": "#FFFFFF",
   "forma": "alto",
-  "h_logo": 40,
-  "h_placa": 63,
-  "boost": 1.25,
-  "w_disp": 30,
-  "h_disp": 40,
-  "bytes": 4918
+  "h_logo": 37,
+  "h_placa": 58,
+  "boost": 1.03,
+  "w_disp": 28,
+  "h_disp": 37,
+  "bytes": 4352
  },
  "lr-motors": {
   "slug": "lr-motors",
@@ -121,8 +121,8 @@
   "placa": "#FFFFFF",
   "forma": "medio",
   "h_logo": 34,
-  "h_placa": 60,
-  "boost": 1.42,
+  "h_placa": 58,
+  "boost": 1.21,
   "w_disp": 84,
   "h_disp": 34,
   "bytes": 7358
@@ -136,12 +136,12 @@
   "perda": 0.0257,
   "placa": "#FFFFFF",
   "forma": "medio",
-  "h_logo": 24,
-  "h_placa": 42,
+  "h_logo": 28,
+  "h_placa": 48,
   "boost": 1.0,
-  "w_disp": 29,
-  "h_disp": 24,
-  "bytes": 2316
+  "w_disp": 34,
+  "h_disp": 28,
+  "bytes": 2822
  },
  "menta-conecta": {
   "slug": "menta-conecta",
@@ -152,12 +152,12 @@
   "perda": 0.0865,
   "placa": "#FFFFFF",
   "forma": "medio",
-  "h_logo": 24,
-  "h_placa": 42,
+  "h_logo": 28,
+  "h_placa": 48,
   "boost": 1.0,
-  "w_disp": 39,
-  "h_disp": 24,
-  "bytes": 3158
+  "w_disp": 46,
+  "h_disp": 28,
+  "bytes": 3948
  },
  "newauto": {
   "slug": "newauto",
@@ -168,12 +168,12 @@
   "perda": 0.0164,
   "placa": "#FFFFFF",
   "forma": "alto",
-  "h_logo": 32,
-  "h_placa": 50,
+  "h_logo": 36,
+  "h_placa": 56,
   "boost": 1.0,
-  "w_disp": 34,
-  "h_disp": 32,
-  "bytes": 4288
+  "w_disp": 39,
+  "h_disp": 36,
+  "bytes": 5094
  },
  "pau-ferro-atelier": {
   "slug": "pau-ferro-atelier",
@@ -185,8 +185,8 @@
   "placa": "#FFFFFF",
   "forma": "medio",
   "h_logo": 34,
-  "h_placa": 60,
-  "boost": 1.42,
+  "h_placa": 58,
+  "boost": 1.21,
   "w_disp": 44,
   "h_disp": 34,
   "bytes": 3134
@@ -201,8 +201,8 @@
   "placa": "#FFFFFF",
   "forma": "medio",
   "h_logo": 34,
-  "h_placa": 60,
-  "boost": 1.42,
+  "h_placa": 58,
+  "boost": 1.21,
   "w_disp": 46,
   "h_disp": 34,
   "bytes": 5254
@@ -216,12 +216,12 @@
   "perda": 0.3062,
   "placa": "#FFFFFF",
   "forma": "medio",
-  "h_logo": 24,
-  "h_placa": 42,
+  "h_logo": 28,
+  "h_placa": 48,
   "boost": 1.0,
-  "w_disp": 30,
-  "h_disp": 24,
-  "bytes": 3438
+  "w_disp": 36,
+  "h_disp": 28,
+  "bytes": 4294
  },
  "praiometro": {
   "slug": "praiometro",
@@ -232,12 +232,12 @@
   "perda": 0.1732,
   "placa": "#FFFFFF",
   "forma": "alto",
-  "h_logo": 32,
-  "h_placa": 50,
+  "h_logo": 36,
+  "h_placa": 56,
   "boost": 1.0,
-  "w_disp": 32,
-  "h_disp": 32,
-  "bytes": 1390
+  "w_disp": 36,
+  "h_disp": 36,
+  "bytes": 1658
  },
  "raf-matos": {
   "slug": "raf-matos",
@@ -248,12 +248,12 @@
   "perda": 0.3505,
   "placa": "#FFFFFF",
   "forma": "medio",
-  "h_logo": 24,
-  "h_placa": 42,
-  "boost": 1.0,
-  "w_disp": 44,
-  "h_disp": 24,
-  "bytes": 3364
+  "h_logo": 34,
+  "h_placa": 58,
+  "boost": 1.21,
+  "w_disp": 62,
+  "h_disp": 34,
+  "bytes": 5036
  },
  "spa-do-automovel-lux": {
   "slug": "spa-do-automovel-lux",
@@ -265,8 +265,8 @@
   "placa": "#FFFFFF",
   "forma": "medio",
   "h_logo": 34,
-  "h_placa": 60,
-  "boost": 1.42,
+  "h_placa": 58,
+  "boost": 1.21,
   "w_disp": 84,
   "h_disp": 34,
   "bytes": 10724
@@ -280,11 +280,11 @@
   "perda": 0.0906,
   "placa": "#FFFFFF",
   "forma": "largo",
-  "h_logo": 18,
-  "h_placa": 36,
+  "h_logo": 20,
+  "h_placa": 38,
   "boost": 1.0,
-  "w_disp": 118,
-  "h_disp": 18,
-  "bytes": 7990
+  "w_disp": 132,
+  "h_disp": 20,
+  "bytes": 9134
  }
 }

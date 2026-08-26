@@ -258,13 +258,28 @@ const chips = `<button type="button" class="chip" aria-pressed="true" data-secto
   sectoresOrd.map(([s, v]) =>
     `<button type="button" class="chip" aria-pressed="false" data-sector="${s}" data-nome="${esc(v.nome)}">${esc(v.nome)} <b>${v.n}</b></button>`).join('')
 
+// Um painel por concelho, com os trabalhos de lá. Abre ao carregar na mancha do mapa.
+// Lista SEMPRE todos os trabalhos do concelho: o mapa não é filtrado pelo sector.
+const paineis = concelhosOrd.map(([nome, n]) => {
+  const ts = localizados.filter(t => t.concelho === nome)
+    .sort((a, b) => ordenados.indexOf(a) - ordenados.indexOf(b))
+  return `<div class="painel" id="p-${slug(nome)}" data-concelho="${slug(nome)}" hidden>
+   <p class="painel-t">${esc(nome)}<b>${n}</b></p>
+   <ul>${ts.map(t => `<li style="--m:${t.marca};--mc:${t.marca_claro};--me:${t.marca_escuro}">` +
+     `<a href="${t.url}" target="_blank" rel="noopener">${esc(t.nome)}<span aria-hidden="true">↗</span></a>` +
+     `<span>${esc(t.actividade)}</span></li>`).join('')}</ul>
+   <button type="button" class="painel-x" aria-label="Fechar"><span aria-hidden="true">×</span></button>
+  </div>`
+}).join('')
+
 // Os concelhos deixaram de ser filtro: é uma legenda do mapa e mais nada.
 const corDoConcelho = nome => localizados.filter(t => t.concelho === nome)
   .sort((a, b) => a.matiz - b.matiz)[0]
 const listaConcelhos = concelhosOrd.map(([nome, n]) => {
   const sl = slug(nome), c = corDoConcelho(nome)
   return `<li data-concelho="${sl}" style="--mc:${c.marca_claro};--me:${c.marca_escuro}">` +
-    `<a class="cn" href="#t-${primeiroDoConcelho.get(sl)}">${esc(nome)}</a>` +
+    `<button type="button" class="cn" aria-expanded="false" aria-controls="p-${sl}">${esc(nome)}` +
+    `<span class="rl"> — ver os ${n === 1 ? 'trabalho' : `${n} trabalhos`} deste concelho</span></button>` +
     `${n > 1 ? `<b>${n}</b>` : ''}</li>`
 }).join('')
 
@@ -340,6 +355,7 @@ const html = `<!doctype html>
    <img src="assets/mapa.svg" width="${VB[2]}" height="${VB[3]}" loading="lazy" decoding="async" draggable="false"
         alt="Mapa de Portugal continental com os ${extenso(porConcelho.size)} concelhos onde há trabalhos assinalados: ${concelhosOrd.map(([n, q]) => q > 1 ? `${n} (${q})` : n).join(', ')}.">
    ${svgSobreposto}
+   ${paineis}
   </div>
  </figure>
 </section>
@@ -370,6 +386,7 @@ const html = `<!doctype html>
 <footer class="rodape">
  <p><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}</p>
  <p>Mapa: Carta Administrativa Oficial de Portugal, DGT.</p>
+ <p class="rod-gestao"><a href="https://app.pagescms.org" target="_blank" rel="noopener">Gestão</a></p>
 </footer>
 
 ${(TEL || WA) ? `<div class="accao">${[
