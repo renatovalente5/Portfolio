@@ -81,7 +81,8 @@ a ligação `tel:` — em corpo grande não precisa de uma palavra a dizer o que
 ```
 data/
   trabalhos.json      ← os dados. FORA do backoffice, e por isso a salvo dele.
-  vitrine.json        ← a ordem e o mostrar/esconder. É o ficheiro do backoffice.
+  vitrine.json        ← a ordem e o mostrar/esconder, sob a chave "cartoes".
+                        É o ficheiro do backoffice.
   autor.json          ← os contactos.
 _source/
   build.mjs           ← o gerador (só node:fs / node:path)
@@ -112,6 +113,25 @@ configurado em `.pages.yml`.
 esquerda. O Pages CMS usa `@dnd-kit/sortable` no formulário de entrada (confirmado em
 `components/entry/entry-form.tsx` do projecto; os docs não o mencionam).
 
+**Cada linha diz o nome da aplicação** — «1. AMMA Creative», «2. LR Motors» — e não
+«Item #1». Isso obrigou a uma mudança de forma no ficheiro. O rótulo de uma linha sai de
+`list.collapsible.summary`, e o `getCollapsibleItemLabel`
+(`components/entry/entry-form.tsx:133`) só o lê quando `list` é um **objecto**. Numa
+entrada de content com `list: true` — o ficheiro a ser ele próprio a lista — o Pages CMS
+fabrica um invólucro com `list: true` **fixo no código**
+(`components/entry/entry.tsx:172-179`), e o rótulo cai sempre no `Item #n` da linha 154.
+Não há chave que salve essa forma.
+
+Por isso a lista deixou de estar na raiz de `data/vitrine.json` e passou a estar sob a
+chave `cartoes`, com um campo `type: object` + `list` a declarar o `summary`. O build
+aceita as duas formas ao ler (para uma migração ou um commit do backoffice não rebentar)
+e escreve sempre a nova. O `{index}` é 1-based e vem do próprio Pages CMS.
+
+Duas armadilhas verificadas no código, não adivinhadas: `{ nome }` **com espaços dá
+string vazia**, e um token que não existe (`{titulo}`) **também dá string vazia** — não
+dá erro nem volta ao «Item #n». Dezoito linhas em branco são piores do que dezoito
+«Item #n», e é por isso que existe o passo 7 do pipeline.
+
 **Contactos** — `data/autor.json`, o telemóvel e o WhatsApp. Deixar um campo vazio faz
 o botão correspondente desaparecer da página; nada é inventado.
 
@@ -139,7 +159,11 @@ e não lhe pode apagar nada. Guardas do build:
 - um trabalho novo nos dados e ainda não na vitrine **entra no fim** e o build avisa —
   acrescentar um trabalho não obriga a mexer em dois ficheiros na ordem certa;
 - o `nome` da vitrine é reescrito dos dados a cada build, por isso não pode ficar
-  desencontrado.
+  desencontrado;
+- o `.pages.yml` e o `data/vitrine.json` têm de concordar na chave onde está a lista, e
+  a entrada não pode voltar a ter `list: true`. Nenhuma destas duas coisas dá erro no
+  Pages CMS: dá um formulário vazio, ou uma gravação que manda um objecto onde a API
+  espera um array. O build lê o `.pages.yml` e **pára** se isso acontecer.
 
 **Activar, uma vez só:** ir a [app.pagescms.org](https://app.pagescms.org), entrar com o
 GitHub, instalar a app neste repositório. As duas colecções aparecem sozinhas. Para dar
@@ -197,6 +221,30 @@ fechá-lo, o painel a flutuar sobre o mapa junto à mancha no telemóvel e a fec
 tocar fora, zero paradas de tabulação no mapa, zero alvos abaixo de 24 px, o botão de
 subir, as ligações dos cartões, e nenhum erro na consola. Sai com código 1 se alguma
 falhar.
+
+## Validar o `.pages.yml`
+
+```bash
+node _source/pipeline/7-pages-yml.mjs
+```
+
+O `.pages.yml` não tem validação do nosso lado, e o Pages CMS **ignora em silêncio** as
+chaves que não conhece — um aviso na consola do browser que ninguém lê. Foi assim que um
+`icon: layout-grid` ficou aqui a fingir que fazia algo: não existe no esquema.
+
+Este passo clona o `pages-cms` (raso, para `_source/tmp/`), instala o `zod` **fora** do
+repositório do site — que continua a gerar-se com `node _source/build.mjs` e mais nada —,
+empacota o `lib/config-schema.ts` e o `lib/schema.ts` verdadeiros com um substituto para
+o `fields/registry`, e corre:
+
+1. o **Zod real** contra o `.pages.yml` — chaves a mais aparecem como erro, não como
+   aviso;
+2. o **`interpolate` real** contra o `data/vitrine.json` — imprime as 18 linhas tal como
+   o backoffice as vai mostrar, e rebenta se um token não resolver em nenhuma delas ou se
+   alguma entrada tiver `list: true`.
+
+Precisa de rede e de `npm`. Não é preciso para publicar; é para quando se mexe no
+`.pages.yml`.
 
 ## Pipeline (só quando os dados de origem mudam)
 

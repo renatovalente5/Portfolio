@@ -27,8 +27,27 @@ const aviso = m => avisos.push(m)
 //                         apagar chaves (o Pages CMS apaga o que não declara).
 //   data/vitrine.json   — a ORDEM e o mostrar/esconder. É o único ficheiro do
 //                         backoffice, e tem três campos.
+//
+// A lista vive sob a chave "cartoes" e não na raiz do ficheiro. Não é gosto: com a
+// lista na raiz (`list: true` na entrada do .pages.yml) o Pages CMS fabrica um
+// invólucro com `list: true` fixo no código e o rótulo de cada linha do backoffice
+// fica «Item #1»…«Item #18», sem forma de o mudar. Sob uma chave, o rótulo sai de
+// list.collapsible.summary e diz «1. AMMA Creative».
+const CHAVE_VITRINE = 'cartoes'
 const DADOS = ler('data/trabalhos.json')
-const vitrine = ler('data/vitrine.json')
+const vitrineFicheiro = ler('data/vitrine.json')
+// tolerante à forma antiga (um array na raiz), para o build não rebentar a meio de uma
+// migração ou num commit do backoffice que chegue primeiro
+const vitrine = Array.isArray(vitrineFicheiro)
+  ? vitrineFicheiro
+  : Array.isArray(vitrineFicheiro?.[CHAVE_VITRINE]) ? vitrineFicheiro[CHAVE_VITRINE] : null
+// Aqui não vale juntar ao relatório do fim: sem lista não há nada para gerar, e o que
+// se via era um TypeError sem explicação vinte linhas abaixo.
+if (!vitrine) {
+  console.error(`\n  ERRO\n   ✗ data/vitrine.json: esperava { "${CHAVE_VITRINE}": [ ... ] }` +
+                `\n     e encontrei ${JSON.stringify(Object.keys(vitrineFicheiro ?? {}))}\n`)
+  process.exit(1)
+}
 const porId = new Map(DADOS.map(t => [t.id, t]))
 
 // Um id na vitrine que não exista nos dados é uma gralha: pára.
@@ -46,7 +65,46 @@ for (const t of DADOS) {
 }
 // O nome na vitrine é só um rótulo para o backoffice: vem sempre dos dados.
 for (const v of vitrine) { const t = porId.get(v.id); if (t) v.nome = t.nome }
-writeFileSync(join(RAIZ, 'data/vitrine.json'), JSON.stringify(vitrine, null, 1) + '\n')
+writeFileSync(join(RAIZ, 'data/vitrine.json'),
+  JSON.stringify({ [CHAVE_VITRINE]: vitrine }, null, 1) + '\n')
+
+// ── O contrato com o backoffice ────────────────────────────────────────────────
+// O .pages.yml e o data/vitrine.json têm de concordar na chave onde está a lista, e a
+// entrada NÃO pode voltar a ter `list: true` (era isso que dava «Item #N»). Um destes
+// dois desalinhar-se não dá erro nenhum no Pages CMS: dá um formulário vazio, ou uma
+// gravação que manda um objecto onde a API espera um array. Por isso pára aqui.
+{
+  const yml = readFileSync(join(RAIZ, '.pages.yml'), 'utf8').split('\n')
+  const i = yml.findIndex(l => l.trim() === '- name: cartoes')
+  if (i < 0) falha('.pages.yml: não encontrei a entrada "- name: cartoes"')
+  else {
+    const base = yml[i].indexOf('-')
+    let fim = yml.length
+    for (let k = i + 1; k < yml.length; k++) {
+      const l = yml[k]
+      if (!l.trim() || l.trimStart().startsWith('#')) continue
+      const dente = l.length - l.trimStart().length
+      if (dente <= base) { fim = k; break }
+    }
+    const bloco = yml.slice(i, fim)
+    const tem = re => bloco.some(l => re.test(l))
+    if (tem(/^\s*list:\s*true\s*$/)) {
+      falha('.pages.yml: a entrada "cartoes" tem `list: true` — nessa forma o backoffice ' +
+            'mostra «Item #1»…«Item #18» e o rótulo não se pode mudar')
+    }
+    const campos = bloco.findIndex(l => l.trim() === 'fields:')
+    const primeiro = campos >= 0 ? bloco.slice(campos + 1).find(l => l.trim().startsWith('- name:')) : null
+    const nome = primeiro ? primeiro.trim().replace('- name:', '').trim() : null
+    if (nome !== CHAVE_VITRINE) {
+      falha(`.pages.yml: o primeiro campo de "cartoes" é "${nome}" mas o data/vitrine.json ` +
+            `guarda a lista em "${CHAVE_VITRINE}" — o backoffice abria um formulário vazio`)
+    }
+    if (!tem(/^\s*summary:\s*\S/)) {
+      aviso('.pages.yml: a lista de cartões não tem `summary` — as linhas do backoffice ' +
+            'voltam a dizer «Item #N»')
+    }
+  }
+}
 
 const TODOS = vitrine.map(v => porId.get(v.id)).filter(Boolean)
 const trabalhos = vitrine.filter(v => v.mostrar !== false).map(v => porId.get(v.id)).filter(Boolean)

@@ -1,6 +1,6 @@
 # Backoffice — Pages CMS (pagescms.org)
 #
-# Deliberadamente pequeno: dois ecrãs, sete campos. O que se faz aqui é mudar a ORDEM
+# Deliberadamente pequeno: dois ecrãs, oito campos. O que se faz aqui é mudar a ORDEM
 # dos cartões e ESCONDER os que não se querem mostrar. Tudo o resto — nomes, endereços,
 # cores, capturas, concelhos — vive em data/trabalhos.json, que este ficheiro NÃO
 # declara e por isso o backoffice nunca vê nem pode estragar.
@@ -14,6 +14,15 @@
 #
 # Ao editar localmente, correr primeiro `git fetch && git rebase origin/main` — o CMS
 # também faz commit em main.
+#
+# Porque é que os cartões estão num campo chamado «cartoes» dentro do ficheiro, em vez
+# de o ficheiro ser ele próprio a lista (`list: true` ao nível da entrada): porque com
+# `list: true` o Pages CMS fabrica um invólucro interno com `list: true` fixo no código
+# (components/entry/entry.tsx) e o rótulo de cada linha só sai de `list.collapsible.summary`
+# quando `list` é um OBJECTO (components/entry/entry-form.tsx). Nessa forma as 18 linhas
+# diziam «Item #1» … «Item #18». Assim dizem «1. AMMA Creative».
+#
+# Verificado com o próprio esquema Zod do Pages CMS 2.1.8 — ver _source/pipeline/7-pages-yml.mjs.
 
 media:
   input: assets
@@ -25,42 +34,44 @@ content:
     path: data/vitrine.json
     type: file
     format: json
-    list: true
-    icon: layout-grid
     description: >-
       A ORDEM DESTA LISTA É A ORDEM DA PÁGINA. Arrasta os itens pelo puxador à
       esquerda para mudar. Desliga o «Mostrar» para esconder um cartão — os
       contadores do topo, as contagens dos sectores e os concelhos do mapa
       actualizam-se sozinhos.
-    view:
-      fields: [nome, mostrar]
-      primary: nome
     fields:
-      - name: mostrar
-        label: Mostrar
-        type: boolean
-        default: true
-      - name: nome
-        label: Cartão
-        type: string
-        description: >-
-          Só um rótulo para esta lista. O nome que aparece no site vem dos dados e é
-          reposto aqui a cada publicação — mudá-lo aqui não muda nada.
-      - name: id
-        label: Identificador
-        type: string
-        required: true
-        pattern: '^[a-z0-9-]+$'
-        description: Não mexer. É o que liga esta linha aos dados do trabalho.
+      - name: cartoes
+        label: false
+        type: object
+        list:
+          collapsible:
+            collapsed: true
+            summary: '{index}. {nome}'
+        fields:
+          - name: mostrar
+            label: Mostrar
+            type: boolean
+            default: true
+          - name: nome
+            label: Cartão
+            type: string
+            description: >-
+              É o que aparece no título desta linha. O nome que aparece no site vem dos
+              dados e é reposto aqui a cada publicação — mudá-lo aqui não muda o site.
+          - name: id
+            label: Identificador
+            type: string
+            required: true
+            pattern: '^[a-z0-9-]+$'
+            description: Não mexer. É o que liga esta linha aos dados do trabalho.
 
   - name: contactos
     label: Contactos
     path: data/autor.json
     type: file
     format: json
-    icon: phone
     description: >-
-      O telemóvel aparece em cinco sítios da página e sai sempre daqui. Deixar um
+      O telemóvel aparece em quatro sítios da página e sai sempre daqui. Deixar um
       campo vazio faz o botão correspondente desaparecer — nada é inventado.
     fields:
       - name: telefone_display

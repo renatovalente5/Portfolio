@@ -164,7 +164,10 @@ async function main () {
 
   const ordem = await ev(`(async()=>{
     const r = await fetch('data/vitrine.json'); if(!r.ok) return null;
-    const dados = (await r.json()).filter(x=>x.mostrar!==false).map(x=>x.nome);
+    const j = await r.json();
+    const lista = Array.isArray(j) ? j : j.cartoes;   // a lista vive sob a chave "cartoes"
+    if (!Array.isArray(lista)) return null;
+    const dados = lista.filter(x=>x.mostrar!==false).map(x=>x.nome);
     const pagina = [...document.querySelectorAll('.ficha h3 a')].map(a=>a.textContent.replace(/ — abre.*/,'').trim());
     const fita = [...document.querySelectorAll('#fita i')].map(i=>i.dataset.id);
     const ids = [...document.querySelectorAll('.ficha')].map(f=>f.dataset.id);

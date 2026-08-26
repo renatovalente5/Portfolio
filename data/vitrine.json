@@ -1,92 +1,94 @@
-[
- {
-  "id": "amma-creative",
-  "nome": "AMMA Creative",
-  "mostrar": true
- },
- {
-  "id": "lr-motors",
-  "nome": "LR Motors",
-  "mostrar": true
- },
- {
-  "id": "artstampcreations",
-  "nome": "ArtStampCreations",
-  "mostrar": true
- },
- {
-  "id": "pau-ferro-atelier",
-  "nome": "Pau Ferro Atelier",
-  "mostrar": true
- },
- {
-  "id": "raf-matos",
-  "nome": "Raf Matos",
-  "mostrar": true
- },
- {
-  "id": "feira-norte-auto",
-  "nome": "Feira Norte Auto",
-  "mostrar": true
- },
- {
-  "id": "gold-cleaning",
-  "nome": "Gold Cleaning Services",
-  "mostrar": true
- },
- {
-  "id": "hv-limpezas",
-  "nome": "HV Limpezas",
-  "mostrar": true
- },
- {
-  "id": "newauto",
-  "nome": "NewAuto",
-  "mostrar": true
- },
- {
-  "id": "weldstaff",
-  "nome": "WeldStaff",
-  "mostrar": true
- },
- {
-  "id": "pokeauto",
-  "nome": "PokeAuto",
-  "mostrar": true
- },
- {
-  "id": "armazem-dos-pneus",
-  "nome": "Armazém dos Pneus",
-  "mostrar": true
- },
- {
-  "id": "marmovar",
-  "nome": "Marmovar",
-  "mostrar": true
- },
- {
-  "id": "hn-transportes",
-  "nome": "HN Transportes",
-  "mostrar": true
- },
- {
-  "id": "perfect-finish",
-  "nome": "Perfect Finish Studio",
-  "mostrar": true
- },
- {
-  "id": "spa-do-automovel-lux",
-  "nome": "Spa do Automóvel LUX",
-  "mostrar": true
- },
- {
-  "id": "menta-conecta",
-  "nome": "Menta Conecta",
-  "mostrar": true
- },
- {
-  "id": "praiometro",
-  "nome": "Praiómetro",
-  "mostrar": true
- }
-]
+{
+ "cartoes": [
+  {
+   "id": "amma-creative",
+   "nome": "AMMA Creative",
+   "mostrar": true
+  },
+  {
+   "id": "lr-motors",
+   "nome": "LR Motors",
+   "mostrar": true
+  },
+  {
+   "id": "artstampcreations",
+   "nome": "ArtStampCreations",
+   "mostrar": true
+  },
+  {
+   "id": "pau-ferro-atelier",
+   "nome": "Pau Ferro Atelier",
+   "mostrar": true
+  },
+  {
+   "id": "raf-matos",
+   "nome": "Raf Matos",
+   "mostrar": true
+  },
+  {
+   "id": "feira-norte-auto",
+   "nome": "Feira Norte Auto",
+   "mostrar": true
+  },
+  {
+   "id": "gold-cleaning",
+   "nome": "Gold Cleaning Services",
+   "mostrar": true
+  },
+  {
+   "id": "hv-limpezas",
+   "nome": "HV Limpezas",
+   "mostrar": true
+  },
+  {
+   "id": "newauto",
+   "nome": "NewAuto",
+   "mostrar": true
+  },
+  {
+   "id": "weldstaff",
+   "nome": "WeldStaff",
+   "mostrar": true
+  },
+  {
+   "id": "pokeauto",
+   "nome": "PokeAuto",
+   "mostrar": true
+  },
+  {
+   "id": "armazem-dos-pneus",
+   "nome": "Armazém dos Pneus",
+   "mostrar": true
+  },
+  {
+   "id": "marmovar",
+   "nome": "Marmovar",
+   "mostrar": true
+  },
+  {
+   "id": "hn-transportes",
+   "nome": "HN Transportes",
+   "mostrar": true
+  },
+  {
+   "id": "perfect-finish",
+   "nome": "Perfect Finish Studio",
+   "mostrar": true
+  },
+  {
+   "id": "spa-do-automovel-lux",
+   "nome": "Spa do Automóvel LUX",
+   "mostrar": true
+  },
+  {
+   "id": "menta-conecta",
+   "nome": "Menta Conecta",
+   "mostrar": true
+  },
+  {
+   "id": "praiometro",
+   "nome": "Praiómetro",
+   "mostrar": true
+  }
+ ]
+}
