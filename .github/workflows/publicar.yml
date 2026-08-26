@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write      # para escrever de volta o index.html reconstruído
   pages: write
   id-token: write
 
@@ -24,16 +24,26 @@ jobs:
         with:
           node-version: '22'
 
+      # O build é a autoridade: se os dados estiverem mal (contagens que não somam,
+      # uma cor de marca sem 4,5:1, um concelho que não existe na CAOP, um contacto
+      # que não vem de autor.json), falha aqui e nada é publicado.
       - name: Gerar o index.html e o mapa
         run: node _source/build.mjs
 
-      - name: O index.html gerado tem de ser igual ao que está no repositório
+      # O backoffice (Pages CMS) só mexe em data/*.json. É aqui que o index.html
+      # gerado volta ao repositório — sem isto, editar no backoffice não mudava nada
+      # na página. O [skip ci] impede que este commit dispare outra corrida.
+      - name: Escrever de volta o index.html, se mudou
         run: |
-          if ! git diff --quiet -- index.html assets/mapa.svg; then
-            echo "::error::index.html ou assets/mapa.svg estão desactualizados."
-            echo "Correr 'node _source/build.mjs' e fazer commit do resultado."
-            git diff --stat -- index.html assets/mapa.svg
-            exit 1
+          if git diff --quiet -- index.html assets/mapa.svg; then
+            echo "index.html já estava actualizado."
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html assets/mapa.svg
+            git commit -m "Reconstruir a página a partir dos dados [skip ci]"
+            git push
+            echo "index.html reconstruído e empurrado."
           fi
 
       - name: Todas as ligações externas têm de responder
@@ -45,7 +55,7 @@ jobs:
                     | sed 's/.*href="//; s/"$//')
           urls=$(grep -oE 'href="https://[^"]+"' index.html \
                  | sed 's/href="//; s/"$//' | sort -u \
-                 | grep -Fxv "$proprio" || true)
+                 | grep -Fxv "$proprio" | grep -v '^https://wa\.me/' || true)
           for u in $urls; do
             estado=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 25 \
                      --retry 2 -A 'Mozilla/5.0 (compatible; portfolio-ci)' "$u" || echo 000)

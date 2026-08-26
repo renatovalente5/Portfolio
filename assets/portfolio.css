@@ -1,10 +1,11 @@
 /* Portefólio — Renato Valente
-   A página não tem cor própria. A única cor da interface é --sinal (foco, chips,
-   ligações); toda a restante cor pertence a um cliente e vive em quatro sítios de
-   área mínima: o filete de 3px da ficha, a banda da fita e o concelho no mapa.
-   É o que permite a dezoito marcas incompatíveis coexistirem sem ruído. */
+   Reescrita limpa. A página não tem cor própria: a única cor da interface é --sinal
+   (foco e ligações). Toda a restante cor pertence a um cliente e vive em quatro
+   sítios de área mínima — o filete de 3px do cartão, a banda da fita, o concelho no
+   mapa e a bolinha do nome do concelho. É o que permite a dezoito marcas
+   incompatíveis coexistirem sem ruído. */
 
-/* ─── fontes ─────────────────────────────────────────────────────────────── */
+/* ═══ fontes ══════════════════════════════════════════════════════════════ */
 /* Recurso metricamente compatível, medido no build: sem isto a troca de fonte
    reflui a primeira dobra inteira, que é justamente onde está o LCP. */
 @font-face{
@@ -28,7 +29,7 @@
   font-weight:400;font-style:normal;font-display:swap;
 }
 
-/* ─── fichas de cor ──────────────────────────────────────────────────────── */
+/* ═══ fichas de cor ═══════════════════════════════════════════════════════ */
 :root{
   --papel:#FBFAF8; --papel-2:#F3F1EC; --superficie:#FFFFFF;
   --tinta:#14161A;    /* 17,1:1 sobre --papel */
@@ -36,20 +37,21 @@
   --tinta-3:#6C7178;  /*  4,7:1 — só meta e etiquetas */
   --fio:#E3E0DA; --terra:#EDEBE5; --placa-fio:rgba(20,22,26,.14);
   --sinal:#0B4FC4;    /*  6,7:1 */
-  --sinal-fraco:#E7EEFB;
   --sombra:0 1px 2px rgba(20,22,26,.05), 0 14px 32px -22px rgba(20,22,26,.34);
   --sombra-2:0 2px 4px rgba(20,22,26,.06), 0 22px 44px -26px rgba(20,22,26,.40);
-  --barra:52px; --fita-h:6px; --raio:14px;
+  --barra:52px; --fita-h:6px; --raio:14px; --accao-h:78px;
   --sans:"Schibsted Grotesk","Schibsted recurso",system-ui,-apple-system,sans-serif;
   --mono:"IBM Plex Mono","Plex recurso",ui-monospace,monospace;
   color-scheme:light dark;
 }
+/* O escuro é declarado duas vezes, para o tema do sistema e um futuro botão de tema
+   ganharem nos dois sentidos. */
 @media (prefers-color-scheme:dark){
   :root:not([data-tema="claro"]){
     --papel:#101114; --papel-2:#171A1F; --superficie:#15181C;
     --tinta:#F1EFEB; --tinta-2:#AEB3BB; --tinta-3:#888D95;
     --fio:#282C33; --terra:#1A1D22; --placa-fio:rgba(255,255,255,.16);
-    --sinal:#93B4FF; --sinal-fraco:#1B2436;
+    --sinal:#93B4FF;
     --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 32px -20px rgba(0,0,0,.8);
     --sombra-2:0 2px 4px rgba(0,0,0,.55), 0 24px 48px -24px rgba(0,0,0,.9);
   }
@@ -58,19 +60,24 @@
   --papel:#101114; --papel-2:#171A1F; --superficie:#15181C;
   --tinta:#F1EFEB; --tinta-2:#AEB3BB; --tinta-3:#888D95;
   --fio:#282C33; --terra:#1A1D22; --placa-fio:rgba(255,255,255,.16);
-  --sinal:#93B4FF; --sinal-fraco:#1B2436;
+  --sinal:#93B4FF;
   --sombra:0 1px 2px rgba(0,0,0,.5), 0 14px 32px -20px rgba(0,0,0,.8);
   --sombra-2:0 2px 4px rgba(0,0,0,.55), 0 24px 48px -24px rgba(0,0,0,.9);
 }
-/* a ficha usa a variante da marca legível no tema em vigor */
-.ficha{--mt:var(--mc)}
-@media (prefers-color-scheme:dark){:root:not([data-tema="claro"]) .ficha{--mt:var(--me)}}
-:root[data-tema="escuro"] .ficha{--mt:var(--me)}
+/* --mt = a variante da cor da marca legível no tema em vigor. O gerador garante
+   4,5:1 para as duas contra o respectivo fundo. */
+.ficha,.conc-lista li{--mt:var(--mc)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-tema="claro"]) .ficha,
+  :root:not([data-tema="claro"]) .conc-lista li{--mt:var(--me)}
+}
+:root[data-tema="escuro"] .ficha,
+:root[data-tema="escuro"] .conc-lista li{--mt:var(--me)}
 
-/* ─── base ───────────────────────────────────────────────────────────────── */
+/* ═══ base ════════════════════════════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box}
 html{
-  overflow-x:clip;               /* nunca hidden: hidden mata o position:sticky */
+  overflow-x:clip;   /* nunca hidden: hidden mata o position:sticky */
   scroll-padding-top:calc(var(--barra) + var(--fita-h) + 16px);
   -webkit-text-size-adjust:100%;
 }
@@ -78,44 +85,33 @@ body{
   margin:0;background:var(--papel);color:var(--tinta);
   font:400 1.0625rem/1.65 var(--sans);
   font-synthesis-weight:none;
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
 img,svg{max-width:100%}
 a{color:var(--sinal)}
 b,strong{font-weight:600}
 h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.022em;text-wrap:balance;hyphens:none}
 p{margin:0}
-:where(button,a,input,summary):focus-visible{outline:2px solid var(--sinal);outline-offset:3px;border-radius:6px}
+:where(button,a,input,summary):focus-visible{
+  outline:2px solid var(--sinal);outline-offset:3px;border-radius:6px
+}
 ::selection{background:var(--sinal);color:var(--papel)}
 .rl{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.micro{font:400 .75rem/1.5 var(--mono);color:var(--tinta-3)}
 
 .salto{
   position:fixed;top:8px;left:8px;z-index:200;transform:translateY(-160%);
-  background:var(--sinal);color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;
-  text-decoration:none;transition:transform .16s
+  background:var(--sinal);color:#fff;padding:12px 18px;border-radius:10px;
+  font-weight:600;text-decoration:none;transition:transform .16s
 }
 .salto:focus{transform:none}
 
-.kicker{
-  font:400 .75rem/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;
-  color:var(--tinta-3)
-}
-.lead{
-  font-size:clamp(1.0625rem,1.5vw,1.1875rem);line-height:1.55;color:var(--tinta-2);
-  max-width:48ch
-}
-.micro{font:400 .75rem/1.5 var(--mono);color:var(--tinta-3)}
-.nota{font-size:.9375rem;color:var(--tinta-2)}
-code{font:400 .9em/1 var(--mono)}
-
 main{display:block}
-main>section{
-  padding-inline:clamp(20px,5vw,40px);
-  max-width:1240px;margin-inline:auto
-}
+main>section{padding-inline:clamp(20px,5vw,40px);max-width:1240px;margin-inline:auto}
+.onde,.trabalhos,.contacto{padding-block:clamp(44px,7vw,80px);border-top:1px solid var(--fio)}
+.onde h2,.trabalhos h2,.contacto h2{font-size:clamp(1.5rem,3.4vw,2.25rem);line-height:1.08}
 
-/* ─── cabeça fixa + fita ─────────────────────────────────────────────────── */
+/* ═══ cabeça fixa + fita ══════════════════════════════════════════════════ */
 .topo{
   position:sticky;top:0;z-index:60;height:var(--barra);
   display:flex;align-items:center;gap:clamp(12px,3vw,28px);
@@ -124,16 +120,23 @@ main>section{
   -webkit-backdrop-filter:saturate(1.6) blur(10px);backdrop-filter:saturate(1.6) blur(10px);
   border-bottom:1px solid var(--fio)
 }
-.topo .marca{color:inherit;text-decoration:none;font-size:.9375rem;letter-spacing:-.01em;white-space:nowrap}
+.topo .marca{
+  color:inherit;text-decoration:none;font-size:.9375rem;
+  letter-spacing:-.01em;white-space:nowrap
+}
 .topo nav{display:none;gap:20px;font:400 .8125rem/1 var(--mono);letter-spacing:.02em}
 .topo nav a{color:var(--tinta-2);text-decoration:none;padding:6px 0}
 .topo nav a:hover{color:var(--tinta)}
 .topo-tel{
-  display:none;margin-left:auto;font:400 .8125rem/1 var(--mono);text-decoration:none;
-  color:var(--sinal);border:1px solid currentColor;border-radius:99px;padding:9px 15px;
-  white-space:nowrap
+  display:none;margin-left:auto;
+  font:400 .8125rem/1 var(--mono);text-decoration:none;color:var(--sinal);
+  border:1px solid currentColor;border-radius:99px;padding:9px 15px;white-space:nowrap;
+  transition:background .18s ease,color .18s ease
 }
+.topo-tel:hover{background:var(--sinal);color:var(--papel)}
 
+/* A fita é INDICADOR de posição, não mostruário: em repouso as bandas estão
+   apagadas e só acende a do cartão que está a meio do ecrã. */
 .fita{
   position:sticky;top:var(--barra);z-index:59;
   display:flex;gap:1px;height:var(--fita-h);
@@ -142,90 +145,65 @@ main>section{
 .fita i{
   flex:1 1 0;min-width:0;background:var(--m);transform-origin:bottom;
   filter:saturate(.16) opacity(.5);
-  transition:transform .18s ease,flex-grow .3s ease,filter .3s ease,opacity .3s ease
+  transition:transform .18s ease,flex-grow .3s ease,filter .3s ease
 }
 .fita i[data-activo]{transform:scaleY(2.4);filter:none}
 .fita i[data-fora]{flex-grow:.22;filter:saturate(0) opacity(.28)}
 
-/* ─── cabeça ─────────────────────────────────────────────────────────────── */
+/* ═══ herói ═══════════════════════════════════════════════════════════════ */
 .cabeca{padding-block:clamp(48px,9vw,104px) clamp(40px,7vw,72px)}
 .cabeca h1{
-  margin:14px 0 20px;
+  margin:0 0 20px;
   font-size:clamp(2.125rem,7.4vw,4.5rem);line-height:.99;letter-spacing:-.03em
 }
 .cabeca h1 em{font-style:normal;color:var(--tinta-3)}
 .contadores{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-width:400px;
   gap:clamp(14px,2.5vw,26px);margin:clamp(30px,4.5vw,44px) 0;
   border-top:1px solid var(--fio);padding-top:clamp(18px,2.5vw,26px)
 }
 .contadores div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .contadores b{
-  font:400 clamp(1.75rem,5.4vw,2.75rem)/1 var(--mono);font-variant-numeric:tabular-nums;
-  letter-spacing:-.03em
+  font:400 clamp(1.75rem,5.4vw,2.75rem)/1 var(--mono);
+  font-variant-numeric:tabular-nums;letter-spacing:-.03em
 }
 .contadores span{font-size:.8125rem;line-height:1.35;color:var(--tinta-3)}
 
-.botoes{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.botoes{display:flex;flex-wrap:wrap;gap:10px}
 .b{
   display:inline-flex;align-items:center;justify-content:center;
   min-height:50px;padding:0 22px;border-radius:12px;
-  font-weight:600;font-size:1rem;text-decoration:none;white-space:nowrap
+  font-weight:600;font-size:1rem;text-decoration:none;white-space:nowrap;
+  transition:background .18s ease,color .18s ease,border-color .18s ease
 }
 .b--1{background:var(--tinta);color:var(--papel)}
-.b--2{background:transparent;color:var(--tinta);border:1px solid var(--tinta-3)}
 .b--1:hover{background:var(--sinal);color:#fff}
+.b--2{background:transparent;color:var(--tinta);border:1px solid var(--tinta-3)}
 .b--2:hover{border-color:var(--tinta);background:var(--papel-2)}
+.cabeca .micro{margin-top:12px}
 
-/* ─── o compasso ─────────────────────────────────────────────────────────── */
-.onde{
-  padding-block:clamp(44px,7vw,80px);border-top:1px solid var(--fio);
-  display:grid;gap:clamp(28px,5vw,52px)
-}
-.onde h2{margin:12px 0 14px;font-size:clamp(1.5rem,3.4vw,2.25rem);line-height:1.08}
-
+/* ═══ onde estão — o mapa ═════════════════════════════════════════════════ */
+.onde{display:grid;gap:clamp(28px,5vw,52px)}
+.onde h2{margin-bottom:14px}
 
 .conc-lista{
   list-style:none;margin:14px 0 0;padding:0;
   display:flex;flex-wrap:wrap;gap:2px 14px;max-width:46ch
 }
-.conc-lista li{
-  display:inline-flex;align-items:baseline;gap:5px;font-size:.875rem
+.conc-lista li{display:inline-flex;align-items:baseline;gap:6px;font-size:.875rem}
+/* bolinha em TODOS, incluindo o primeiro */
+.conc-lista li::before{
+  content:"";width:5px;height:5px;border-radius:50%;flex:0 0 auto;align-self:center;
+  background:var(--mt,var(--tinta-3));opacity:.5;
+  transition:opacity .16s ease,transform .16s ease
 }
+.conc-lista li[data-perto]::before,
+.conc-lista li[data-activo]::before{opacity:1;transform:scale(1.4)}
 .conc-lista b{
   font:400 .6875rem/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--tinta-3)
 }
-.mapa{margin:0}
-.mapa-caixa{
-  position:relative;margin-inline:auto;
-  width:min(100%,340px);aspect-ratio:494/1000   /* o mesmo do viewBox do SVG */
-}
-@media (hover:hover) and (pointer:fine){ .mapa-caixa{cursor:crosshair} }
-.mapa-caixa[data-mostra]{cursor:pointer}
-.mapa-caixa>img{
-  display:block;width:100%;height:100%;
-  user-select:none;-webkit-user-select:none;
-  -webkit-touch-callout:none;-webkit-user-drag:none   /* toque longo não abre o menu de imagem */
-}
-.mapa-cima{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
-.mapa-cima .conc path{
-  fill:var(--m,var(--tinta-3));stroke:var(--papel);stroke-width:1.6;
-  paint-order:stroke fill markers;   /* auréola exterior: não come a mancha */
-  transform-box:fill-box;transform-origin:center;
-  transition:opacity .22s ease,transform .18s cubic-bezier(.2,.8,.2,1),
-             stroke-width .18s ease,stroke .18s ease
-}
-.mapa-cima .conc path[data-fora]{opacity:.24}
-/* o :not() fixa a precedência por propriedade em vez de a deixar à ordem do ficheiro:
-   o ponteiro ganha sempre ao scroll */
-.mapa-cima .conc path[data-activo]:not([data-perto]){transform:scale(1.18);stroke-width:3}
-.mapa-cima .conc path[data-perto]{transform:scale(1.2);stroke:var(--tinta);stroke-width:5}
-
 /* Os nomes são âncoras verdadeiras para o primeiro cartão do concelho: é assim que
    quem usa teclado ou telemóvel — onde não há rato — chega ao mesmo sítio. */
-.conc-lista li{--mt:var(--mc)}
-@media (prefers-color-scheme:dark){:root:not([data-tema="claro"]) .conc-lista li{--mt:var(--me)}}
-:root[data-tema="escuro"] .conc-lista li{--mt:var(--me)}
 .conc-lista a{
   display:inline-block;padding:11px 2px;   /* 45px de alvo de toque */
   color:var(--tinta-2);text-decoration:none;
@@ -234,28 +212,22 @@ main>section{
 }
 .conc-lista li[data-activo]:not([data-perto]) a,
 .conc-lista li[data-perto] a,
-.conc-lista a:hover,.conc-lista a:focus-visible{
-  color:var(--tinta);box-shadow:inset 0 -2px 0 var(--mt,currentColor)
-}
+.conc-lista a:hover,
+.conc-lista a:focus-visible{color:var(--tinta);box-shadow:inset 0 -2px 0 var(--mt,currentColor)}
 .conc-lista a:not([href]){color:var(--tinta-3);cursor:default;box-shadow:none}
-
-/* chegada: sinal de posição, estático — é o idioma que a fita já usa */
-.ficha .filete{transition:transform .18s ease}
-.ficha:target{border-color:var(--mt)}
-.ficha:target .filete{transform:scaleY(2);transform-origin:top}
 
 .mapa{margin:0}
 .mapa-caixa{
   position:relative;margin-inline:auto;
   width:min(100%,340px);aspect-ratio:494/1000   /* o mesmo do viewBox do SVG */
 }
-@media (hover:hover) and (pointer:fine){ .mapa-caixa{cursor:crosshair} }
-.mapa-caixa[data-mostra]{cursor:pointer}
 .mapa-caixa>img{
   display:block;width:100%;height:100%;
   user-select:none;-webkit-user-select:none;
   -webkit-touch-callout:none;-webkit-user-drag:none   /* toque longo não abre o menu de imagem */
 }
+@media (hover:hover) and (pointer:fine){.mapa-caixa{cursor:crosshair}}
+.mapa-caixa[data-mostra]{cursor:pointer}
 .mapa-cima{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
 .mapa-cima .conc path{
   fill:var(--m,var(--tinta-3));stroke:var(--papel);stroke-width:1.6;
@@ -265,46 +237,35 @@ main>section{
              stroke-width .18s ease,stroke .18s ease
 }
 .mapa-cima .conc path[data-fora]{opacity:.24}
-/* o :not() fixa a precedência por propriedade em vez de a deixar à ordem do ficheiro:
-   o ponteiro ganha sempre ao scroll */
+/* o :not() fixa a precedência por propriedade: o ponteiro ganha sempre ao scroll */
 .mapa-cima .conc path[data-activo]:not([data-perto]){transform:scale(1.18);stroke-width:3}
 .mapa-cima .conc path[data-perto]{transform:scale(1.2);stroke:var(--tinta);stroke-width:5}
 
-/* o nome na lista acende com a mancha no mapa, e vice-versa */
-.conc-lista li[data-perto]{color:var(--tinta);font-weight:600}
-.conc-lista li[data-perto] .cn{box-shadow:inset 0 -2px 0 var(--sinal)}
-
-/* ─── controlos + grelha ─────────────────────────────────────────────────── */
-.trabalhos,.controlos h2{font-size:clamp(1.5rem,3.4vw,2.25rem);line-height:1.08;margin-bottom:20px}
+/* ═══ controlos + grelha ══════════════════════════════════════════════════ */
+.controlos h2{margin-bottom:20px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{
   display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 15px;
   border:1px solid var(--fio);border-radius:99px;background:var(--superficie);
-  cursor:pointer;font:400 .875rem/1 var(--sans);color:var(--tinta-2)
+  cursor:pointer;font:400 .875rem/1 var(--sans);color:var(--tinta-2);
+  transition:border-color .16s ease,color .16s ease,background .16s ease
 }
-.chip b{
-  font:400 .75rem/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--tinta-3)
-}
+.chip b{font:400 .75rem/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--tinta-3)}
 .chip:hover{border-color:var(--tinta-3);color:var(--tinta)}
 .chip[aria-pressed="true"]{
-  background:var(--sinal);border-color:var(--sinal);color:#fff;font-weight:600
+  background:var(--sinal);border-color:var(--sinal);color:var(--papel);font-weight:600
 }
-.chip[aria-pressed="true"] b{color:rgba(255,255,255,.78)}
-:root[data-tema="escuro"] .chip[aria-pressed="true"],
-:root:not([data-tema="claro"]) .chip[aria-pressed="true"]{color:#0A0C10}
-@media (prefers-color-scheme:light){:root:not([data-tema="escuro"]) .chip[aria-pressed="true"]{color:#fff}}
-:root[data-tema="escuro"] .chip[aria-pressed="true"] b{color:rgba(10,12,16,.66)}
+.chip[aria-pressed="true"] b{color:inherit;opacity:.72}
 .resultado{
-  margin:20px 0 clamp(26px,3.6vw,34px);font:400 .8125rem/1.5 var(--mono);
-  color:var(--tinta-3);font-variant-numeric:tabular-nums
+  margin:20px 0 clamp(26px,3.6vw,34px);
+  font:400 .8125rem/1.5 var(--mono);color:var(--tinta-3);font-variant-numeric:tabular-nums
 }
-.resultado b{color:var(--tinta);font-weight:400}
 
 .grelha{display:grid;gap:clamp(22px,2.6vw,30px);grid-template-columns:1fr}
 @media (min-width:620px){.grelha{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:1080px){.grelha{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-/* ─── a ficha ────────────────────────────────────────────────────────────── */
+/* ═══ a ficha ═════════════════════════════════════════════════════════════ */
 .ficha{
   position:relative;display:flex;flex-direction:column;
   background:var(--superficie);border:1px solid var(--fio);
@@ -313,13 +274,18 @@ main>section{
   content-visibility:auto;contain-intrinsic-size:auto 470px;
   transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease
 }
-.ficha .filete{
-  position:absolute;inset:0 0 auto;height:3px;background:var(--m);border-radius:3px 3px 0 0
-}
 .ficha.fora{display:none}
+.ficha .filete{
+  position:absolute;inset:0 0 auto;height:3px;background:var(--m);
+  border-radius:3px 3px 0 0;transition:transform .18s ease
+}
+/* chegada por âncora: sinal de posição, estático */
+.ficha:target{border-color:var(--mt)}
+.ficha:target .filete{transform:scaleY(2);transform-origin:top}
 
 .visor{
-  position:relative;margin:calc(clamp(16px,2vw,20px) + 3px) calc(-1*clamp(16px,2vw,20px)) 0;
+  position:relative;
+  margin:calc(clamp(16px,2vw,20px) + 3px) calc(-1*clamp(16px,2vw,20px)) 0;
   padding:clamp(16px,2vw,20px) clamp(16px,2vw,20px) 30px;
   background:var(--terra)
 }
@@ -329,6 +295,12 @@ main>section{
   border-radius:8px 8px 0 0
 }
 .moldura i{width:6px;height:6px;border-radius:50%;background:var(--fio);flex:0 0 auto}
+.moldura b{
+  margin-left:6px;font:400 .625rem/1 var(--mono);font-weight:400;color:var(--tinta-3);
+  letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+/* «Em desenvolvimento»: é uma coisa sobre o ENDEREÇO, não sobre o trabalho — por isso
+   vive ao lado dele, em cinzento neutro e nunca na cor da marca do cliente. */
 .moldura em{
   flex:0 0 auto;margin-left:auto;display:inline-flex;align-items:center;gap:5px;
   font:400 .625rem/1 var(--mono);font-style:normal;letter-spacing:.02em;
@@ -336,12 +308,7 @@ main>section{
   border:1px solid var(--fio);border-radius:99px;padding:4px 8px;white-space:nowrap
 }
 .moldura em::before{
-  content:"";width:5px;height:5px;border-radius:50%;
-  background:var(--tinta-3);flex:0 0 auto   /* cinzento neutro, nunca a cor da marca */
-}
-.moldura b{
-  margin-left:6px;font:400 .625rem/1 var(--mono);font-weight:400;color:var(--tinta-3);
-  letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  content:"";width:5px;height:5px;border-radius:50%;background:var(--tinta-3);flex:0 0 auto
 }
 .ecra{
   display:block;width:100%;height:auto;aspect-ratio:16/10;
@@ -355,41 +322,46 @@ main>section{
   box-shadow:0 3px 10px rgba(0,0,0,.20),0 12px 26px -14px rgba(0,0,0,.34);
   object-fit:cover;object-position:top center;background:var(--papel-2)
 }
+/* A placa é branca em dezasseis dos dezoito. Os dois que levam tinta escura são os
+   que têm a arte literalmente branca (Gold Cleaning, Feira Norte Auto): a cor vem do
+   gerador, que mede pixel a pixel qual das duas perde menos arte. */
 .placa{
   position:absolute;left:clamp(16px,2vw,20px);bottom:14px;
   height:var(--hp);padding:0 12px;background:var(--placa);
   border:1px solid var(--placa-fio);border-radius:10px;
-  display:inline-flex;align-items:center;
-  box-shadow:0 2px 6px rgba(0,0,0,.16)
+  display:inline-flex;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.16)
 }
 .placa img{display:block;object-fit:contain;height:auto}
 
-.ficha h3{margin:6px 0 0;font-size:1.1875rem;line-height:1.22}
+.ficha h3{margin:18px 0 0;font-size:1.1875rem;line-height:1.22}
 .ficha h3 a{color:inherit;text-decoration:none}
 .ficha h3 a::after{content:"";position:absolute;inset:0;border-radius:var(--raio)}
 .ficha:has(a:focus-visible){outline:2px solid var(--sinal);outline-offset:3px}
 .ficha h3 a:focus-visible{outline:none}
-.meta{
-  margin-top:6px;font:400 .8125rem/1.45 var(--mono);color:var(--tinta-3);
-  display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px
-}
-.etiquetas{
-  display:flex;flex-wrap:wrap;gap:6px;margin-top:12px
-}
+.meta{margin-top:6px;font:400 .8125rem/1.45 var(--mono);color:var(--tinta-3)}
+.etiquetas{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .etiquetas span{
   font:400 .6875rem/1 var(--mono);letter-spacing:.02em;color:var(--tinta-3);
   border:1px solid var(--fio);border-radius:99px;padding:5px 9px
 }
-.cta{
-  margin-top:auto;padding-top:16px;font-weight:600;font-size:.9375rem;color:var(--mt)
-}
+.cta{margin-top:auto;padding-top:16px;font-weight:600;font-size:.9375rem;color:var(--mt)}
 .cta span{display:inline-block;transition:transform .2s ease}
 
+/* O cartão largo tinha três linhas de texto contra uma captura de 350px: uma vala de
+   branco. A coluna da imagem cresce e o texto centra-se contra ela. */
 .ficha--largo{grid-column:1/-1}
 @media (min-width:620px){
-  .ficha--largo{display:grid;grid-template-columns:1.15fr 1fr;column-gap:clamp(20px,3vw,38px);align-items:start}
-  .ficha--largo .visor{grid-row:1/span 7;margin-right:0;border-radius:0 0 10px 0}
-  .ficha--largo }
+  .ficha--largo{
+    display:grid;grid-template-columns:1.9fr 1fr;
+    column-gap:clamp(22px,3vw,40px);align-items:center
+  }
+  .ficha--largo .visor{
+    grid-row:1/span 5;margin-right:0;border-radius:0 0 10px 0;align-self:stretch
+  }
+  .ficha--largo h3{margin-top:0;font-size:clamp(1.25rem,2.1vw,1.75rem)}
+  .ficha--largo .cta{margin-top:18px;padding-top:0}
+  .ficha--largo .tel{width:19%}   /* a coluna é o dobro: 30% seria uma parede */
+}
 
 @media (hover:hover) and (pointer:fine){
   .ecra,.tel{filter:saturate(.78);transition:filter .28s ease}
@@ -398,22 +370,48 @@ main>section{
   .ficha:hover .cta span{transform:translate(3px,-3px)}
 }
 
-/* ─── método ─────────────────────────────────────────────────────────────── */
+/* ═══ contacto ════════════════════════════════════════════════════════════ */
+.contacto h2{margin-bottom:clamp(24px,4vw,36px)}
+.cx{display:flex;flex-wrap:wrap;align-items:center;gap:clamp(18px,3.4vw,40px)}
+/* O número em tamanho grande é o próprio botão: não precisa de uma palavra a dizer
+   o que é. */
+.cx-num{
+  display:inline-block;text-decoration:none;color:var(--tinta);
+  font:400 clamp(2rem,6.4vw,3.5rem)/1.05 var(--mono);
+  font-variant-numeric:tabular-nums;letter-spacing:-.035em;white-space:nowrap;
+  padding-bottom:6px;box-shadow:inset 0 -2px 0 var(--fio);
+  transition:color .18s ease,box-shadow .18s ease
+}
+.cx-num:hover{color:var(--sinal);box-shadow:inset 0 -2px 0 var(--sinal)}
+.cx-bt{display:flex;flex-wrap:wrap;gap:10px}
+.contacto .micro{margin-top:18px}
 
-/* ─── para quem é da área ────────────────────────────────────────────────── */
-
-
-/* ─── rodapé ─────────────────────────────────────────────────────────────── */
+/* ═══ rodapé ══════════════════════════════════════════════════════════════ */
 .rodape{
-  max-width:1240px;margin:0 auto;padding:clamp(36px,6vw,60px) clamp(20px,5vw,40px) clamp(40px,6vw,72px);
-  border-top:1px solid var(--fio);display:grid;gap:clamp(22px,3vw,40px);
+  max-width:1240px;margin:0 auto;
+  padding:clamp(36px,6vw,60px) clamp(20px,5vw,40px) clamp(40px,6vw,72px);
+  border-top:1px solid var(--fio);
   font:400 .8125rem/1.65 var(--mono);color:var(--tinta-3)
 }
 .rodape b{color:var(--tinta);font-weight:400}
-.rodape p+p{margin-top:6px}
+.rodape p+p{margin-top:8px;max-width:64ch}
 .rodape a{display:inline-block;min-height:26px;padding:4px 0}
 
-/* ─── barra de acção (telemóvel) ─────────────────────────────────────────── */
+/* ═══ botões fixos ════════════════════════════════════════════════════════ */
+.subir{
+  position:fixed;right:clamp(14px,2.5vw,26px);
+  bottom:calc(clamp(14px,2.5vw,26px) + env(safe-area-inset-bottom));
+  z-index:65;width:46px;height:46px;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;font-size:1.0625rem;line-height:1;
+  color:var(--tinta);background:color-mix(in srgb,var(--superficie) 88%,transparent);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid var(--fio);box-shadow:var(--sombra);
+  opacity:0;transform:translateY(8px);pointer-events:none;
+  transition:opacity .2s ease,transform .2s ease,border-color .18s ease
+}
+.subir[data-ver]{opacity:1;transform:none;pointer-events:auto}
+.subir:hover{border-color:var(--tinta-3)}
+
 .accao{
   position:fixed;inset:auto 0 0 0;z-index:70;display:flex;gap:10px;
   padding:10px 14px calc(10px + env(safe-area-inset-bottom));
@@ -427,17 +425,19 @@ main>section{
   background:var(--tinta);color:var(--papel)
 }
 .accao a+a{background:transparent;color:var(--tinta);border:1px solid var(--tinta-3)}
-body:has(.accao){padding-bottom:78px}
-
-/* ─── pontos de quebra ───────────────────────────────────────────────────── */
-@media (min-width:560px){
-  .contadores{grid-template-columns:repeat(2,minmax(0,1fr));max-width:400px}
+/* espaço reservado: a barra fixa não tapa o rodapé, e o botão de subir sobe acima dela */
+body:has(.accao){padding-bottom:var(--accao-h)}
+body:has(.accao) .subir{
+  bottom:calc(var(--accao-h) + clamp(12px,2vw,18px) + env(safe-area-inset-bottom))
 }
+
+/* ═══ pontos de quebra ════════════════════════════════════════════════════ */
 @media (min-width:900px){
   .topo nav{display:flex}
   .topo-tel{display:inline-flex;align-items:center}
-    .accao{display:none}
+  .accao{display:none}
   body:has(.accao){padding-bottom:0}
+  body:has(.accao) .subir{bottom:clamp(14px,2.5vw,26px)}
   .onde{grid-template-columns:1fr .72fr;align-items:center}
   .onde .mapa{position:sticky;top:calc(var(--barra) + var(--fita-h) + 24px)}
   .cabeca h1{max-width:19ch}
@@ -448,24 +448,33 @@ body:has(.accao){padding-bottom:78px}
   .mapa-caixa{width:min(100%,420px)}
 }
 
-/* ─── movimento reduzido ─────────────────────────────────────────────────── */
+/* ═══ movimento reduzido ══════════════════════════════════════════════════ */
+/* Nunca `animation-duration:.01ms`: isso não pára animações infinitas, acelera-as
+   até piscar. Aqui não há animações — só transições, e essas morrem. */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{
     animation:none!important;transition:none!important;scroll-behavior:auto!important
   }
-  .fita i[data-activo]{transform:none;filter:none;opacity:1}
+  .fita i[data-activo]{transform:none;filter:none}
+  .fita i[data-fora]{flex-grow:1;filter:saturate(0) opacity(.4)}
+  .ficha:hover{transform:none}
+  .subir{transform:none}
+  /* estado, não movimento: mantêm-se */
   .mapa-cima .conc path[data-activo]:not([data-perto]){transform:none;stroke-width:3}
   .mapa-cima .conc path[data-perto]{transform:none;stroke-width:5}
-  .ficha:target .filete{transform:scaleY(2)}   /* estado, não movimento: mantém-se */
-  .fita i[data-fora]{flex-grow:1;filter:grayscale(.85);opacity:.5}
-  .ficha:hover{transform:none}
-  }
+  .ficha:target .filete{transform:scaleY(2)}
+  .conc-lista li[data-perto]::before{transform:none}
+}
 
-/* ─── alto contraste ─────────────────────────────────────────────────────── */
+/* ═══ alto contraste ══════════════════════════════════════════════════════ */
+/* Toda a linguagem gráfica são fios a 8–14% de tinta e uma cor de acento — é
+   exactamente o que o modo de alto contraste apaga. */
 @media (forced-colors:active){
-  .topo,.accao{background:Canvas;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .topo,.accao,.subir{background:Canvas;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .subir{color:CanvasText;border:1px solid CanvasText}
   .ficha{border:1px solid CanvasText}
   .ficha .filete{background:CanvasText}
+  .ficha:target{outline:2px solid Highlight;outline-offset:-2px}
   .moldura,.ecra,.tel,.placa{border-color:CanvasText}
   .fita{border-bottom:1px solid CanvasText}
   .fita i{background:CanvasText}
@@ -474,11 +483,12 @@ body:has(.accao){padding-bottom:78px}
   .mapa-cima .conc path{fill:CanvasText;stroke:Canvas}
   .mapa-cima .conc path[data-perto],
   .mapa-cima .conc path[data-activo]{fill:Highlight;stroke:CanvasText}
+  /* o box-shadow não é pintado aqui: o risco tem de ser text-decoration */
   .conc-lista a{color:LinkText}
-  .conc-lista li[data-perto] a,.conc-lista li[data-activo] a{color:Highlight;text-decoration:underline}
+  .conc-lista li[data-perto] a,
+  .conc-lista li[data-activo] a{color:Highlight;text-decoration:underline}
   .conc-lista a:not([href]){color:GrayText;text-decoration:none}
-  .ficha:target{outline:2px solid Highlight;outline-offset:-2px}
-  .mapa-cima .arco,.mapa-cima .guia,.mapa-cima .eu circle,  .b--1,.accao a{background:CanvasText;color:Canvas;border:1px solid CanvasText}
+  .cx-num{color:LinkText;box-shadow:none;text-decoration:underline}
+  .b--1,.accao a{background:CanvasText;color:Canvas;border:1px solid CanvasText}
   .b--2,.accao a+a{background:Canvas;color:CanvasText;border:1px solid CanvasText}
-  }
-
+}

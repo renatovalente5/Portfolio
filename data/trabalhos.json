@@ -29,7 +29,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "armazem-dos-pneus",
@@ -62,7 +63,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "artstampcreations",
@@ -94,7 +96,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "feira-norte-auto",
@@ -125,7 +128,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "gold-cleaning",
@@ -156,7 +160,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "hn-transportes",
@@ -187,7 +192,8 @@
   "linguas": 3,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "hv-limpezas",
@@ -218,7 +224,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "lr-motors",
@@ -250,7 +257,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "marmovar",
@@ -282,7 +290,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "menta-conecta",
@@ -313,7 +322,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "newauto",
@@ -345,7 +355,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "pau-ferro-atelier",
@@ -376,7 +387,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "perfect-finish",
@@ -408,7 +420,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "pokeauto",
@@ -440,7 +453,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "praiometro",
@@ -472,8 +486,9 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "destaque_largo": true,
-  "em_desenvolvimento": false
+  "destaque_largo": false,
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "raf-matos",
@@ -504,7 +519,8 @@
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  },
  {
   "id": "spa-do-automovel-lux",
@@ -535,7 +551,8 @@
   "linguas": 1,
   "dominio_proprio": false,
   "ano": 2026,
-  "em_desenvolvimento": true
+  "em_desenvolvimento": true,
+  "visivel": true
  },
  {
   "id": "weldstaff",
@@ -567,6 +584,7 @@
   "linguas": 4,
   "dominio_proprio": true,
   "ano": 2026,
-  "em_desenvolvimento": false
+  "em_desenvolvimento": false,
+  "visivel": true
  }
 ]

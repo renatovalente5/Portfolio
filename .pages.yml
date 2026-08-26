@@ -1,0 +1,221 @@
+# Backoffice — Pages CMS (pagescms.org)
+#
+# Como funciona: editas em app.pagescms.org, o Pages CMS faz commit em `main`, o
+# GitHub Actions reconstrói o index.html e publica. Demora 1 a 3 minutos.
+#
+# O botão que interessa é o «Mostrar na página» de cada trabalho. Ao desligá-lo, o
+# trabalho sai da grelha E TODOS os números se recalculam sozinhos: os contadores do
+# topo, as contagens dos sectores, os concelhos do mapa. Nada é escrito à mão.
+#
+# Atenção ao editar localmente: como o CMS faz commit em `main`, correr sempre
+#   git fetch && git rebase origin/main
+# antes de empurrar, senão o push é recusado.
+
+media:
+  input: assets
+  output: assets
+
+content:
+  - name: trabalhos
+    label: Trabalhos
+    path: data/trabalhos.json
+    type: file
+    list: true
+    icon: layout-grid
+    view:
+      fields: [nome, actividade, concelho, visivel]
+      primary: nome
+    fields:
+      - name: visivel
+        label: Mostrar na página
+        type: boolean
+        default: true
+        description: >-
+          Desliga para esconder este trabalho. Os contadores do topo, os filtros
+          por sector e os concelhos do mapa actualizam-se sozinhos.
+
+      - name: nome
+        label: Nome do cliente
+        type: string
+        required: true
+      - name: id
+        label: Identificador
+        type: string
+        required: true
+        pattern: '^[a-z0-9-]+$'
+        description: >-
+          Só minúsculas, números e hífenes. Tem de coincidir com os nomes dos
+          ficheiros em assets/capturas/ e assets/logos/. Não mudar depois de criado.
+
+      - name: url
+        label: Endereço completo do site
+        type: string
+        required: true
+        pattern: '^https://'
+      - name: endereco
+        label: Endereço como aparece no cartão
+        type: string
+        required: true
+        description: 'Sem https://. Exemplo: armazemdospneus.pt'
+      - name: em_desenvolvimento
+        label: Ainda sem domínio final
+        type: boolean
+        default: false
+        description: >-
+          Liga enquanto o site estiver no github em vez do domínio do cliente.
+          Escreve «Em desenvolvimento» na barra de endereço do cartão.
+      - name: dominio_proprio
+        label: Tem domínio .pt próprio
+        type: boolean
+        default: false
+
+      - name: actividade
+        label: Actividade
+        type: string
+        required: true
+        description: 'Curta. Exemplo: Pneus e oficina auto'
+      - name: sector
+        label: Sector
+        type: select
+        required: true
+        options:
+          values:
+            - { value: automovel, label: Automóvel }
+            - { value: personalizados, label: Personalizados }
+            - { value: limpezas, label: Limpezas }
+            - { value: construcao, label: Construção }
+            - { value: mobiliario, label: Mobiliário }
+            - { value: transportes, label: Transportes }
+            - { value: industria, label: Indústria }
+            - { value: produto, label: Produto próprio }
+      - name: sector_nome
+        label: Sector (como aparece no chip)
+        type: string
+        required: true
+
+      - name: concelho
+        label: Concelho
+        type: string
+        description: >-
+          Escrito exactamente como na Carta Administrativa (o build verifica contra
+          os 308). Deixar vazio só para trabalhos sem localização.
+      - name: localidade
+        label: Localidade
+        type: string
+      - name: distrito
+        label: Distrito
+        type: string
+      - name: lat
+        label: Latitude do centróide do concelho
+        type: number
+        options: { step: 0.001 }
+      - name: lon
+        label: Longitude do centróide do concelho
+        type: number
+        options: { step: 0.001 }
+
+      - name: marca
+        label: Cor de marca
+        type: string
+        required: true
+        pattern: '^#[0-9A-Fa-f]{6}$'
+        description: 'Hex de seis dígitos, medido no logótipo do cliente. Exemplo: #FECB00'
+      - name: tema
+        label: Tema do site do cliente
+        type: select
+        options:
+          values: [claro, escuro]
+
+      - name: backoffice
+        label: O cliente edita sozinho
+        type: boolean
+        default: false
+      - name: loja
+        label: Tem loja online
+        type: boolean
+        default: false
+        description: Escreve a etiqueta «Loja online» no cartão.
+      - name: gerador
+        label: Construído por gerador próprio
+        type: boolean
+        default: false
+      - name: linguas
+        label: Número de línguas
+        type: number
+        default: 1
+        options: { step: 1, min: 1 }
+      - name: ano
+        label: Ano
+        type: number
+        options: { step: 1, min: 2000 }
+
+      # Guardados nos dados mas já não escritos na página (ficaram de fora quando os
+      # textos saíram). Não apagar: o build exige-os e podem voltar a ser úteis.
+      - name: resumo
+        label: Resumo (não aparece na página)
+        type: text
+        required: true
+      - name: destaque
+        label: Destaque técnico (não aparece na página)
+        type: text
+        required: true
+      - name: repo
+        label: Nome do repositório
+        type: string
+      - name: tech
+        label: Tecnologias
+        type: string
+        list: true
+      - name: destaque_largo
+        label: Cartão de largura dupla
+        type: boolean
+        default: false
+        description: >-
+          Ocupa a linha toda da grelha. Reservado ao Praiómetro. Se o CMS não
+          conhecesse este campo, apagava-o ao gravar e o cartão encolhia sozinho.
+
+  - name: autor
+    label: Os meus contactos
+    path: data/autor.json
+    type: file
+    icon: user
+    fields:
+      - name: nome
+        label: Nome
+        type: string
+      - name: papel
+        label: O que faço
+        type: string
+      - name: telefone
+        label: Telefone para marcar
+        type: string
+        description: 'Com indicativo e +. Exemplo: +351925110570'
+      - name: telefone_display
+        label: Telefone como aparece escrito
+        type: string
+        description: 'Exemplo: 925 110 570'
+      - name: whatsapp
+        label: WhatsApp
+        type: string
+        description: 'Indicativo sem o +. Exemplo: 351925110570'
+      - name: email
+        label: Email
+        type: string
+        description: Deixar vazio para não aparecer em sítio nenhum.
+      - name: github
+        label: GitHub
+        type: string
+      - name: nif
+        label: NIF
+        type: string
+        description: Fica vazio por decisão. A página não o mostra.
+      - name: morada
+        label: Morada
+        type: string
+        description: Fica vazia por decisão. A página não a mostra.
+      - name: linkedin
+        label: LinkedIn
+        type: string
+      - name: _nota
+        label: Nota interna
+        type: text

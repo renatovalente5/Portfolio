@@ -16,7 +16,11 @@ const RAIZ = join(AQUI, '..')
 const ler = p => JSON.parse(readFileSync(join(RAIZ, p), 'utf8'))
 const AUDITAR = process.argv.includes('--auditar')
 
-const trabalhos = ler('data/trabalhos.json')
+const TODOS = ler('data/trabalhos.json')
+// `visivel: false` esconde o trabalho da página. É o único botão do backoffice, e
+// TODOS os números da página se recalculam a partir daqui — não há nada escrito à mão.
+const trabalhos = TODOS.filter(t => t.visivel !== false)
+const escondidos = TODOS.length - trabalhos.length
 const autor = ler('data/autor.json')
 const capturas = ler('_source/dados/capturas.json')
 const logos = ler('_source/dados/logos.json')
@@ -310,9 +314,10 @@ const html = `<!doctype html>
 <header class="topo">
  <a class="marca" href="#top"><b>Renato Valente</b></a>
  <nav aria-label="Secções">
-  <a href="#trabalhos">Trabalhos</a><a href="#onde">Onde</a><a href="#contacto">Contacto</a>
+  <a href="#trabalhos">Trabalhos</a><a href="#contacto">Contacto</a>
  </nav>
- ${TEL ? `<a class="topo-tel" href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : ''}
+ ${WA ? `<a class="topo-tel" href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp ${esc(TEL_TXT)}</a>`
+       : (TEL ? `<a class="topo-tel" href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : '')}
 </header>
 <div class="fita" id="fita" aria-hidden="true">${fita}</div>
 
@@ -346,12 +351,17 @@ const html = `<!doctype html>
   <p class="resultado" id="resultado" aria-live="polite">${N} trabalhos</p>
  </div>
  <div class="grelha" id="grelha">${ordenados.map(ficha).join('\n')}</div>
- <p class="vazio" id="vazio" hidden></p>
 </section>
 
 <section id="contacto" class="contacto">
  <h2>Falar comigo</h2>
- ${SEM_CONTACTO ? '' : `<p class="botoes">${botoes.join('')}</p>
+ ${SEM_CONTACTO ? '' : `<div class="cx">
+  ${TEL ? `<a class="cx-num" href="tel:${esc(TEL)}"><span>${esc(TEL_TXT)}</span></a>` : ''}
+  <p class="cx-bt">${[
+    WA ? `<a class="b b--1" href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp</a>` : '',
+    TEL ? `<a class="b b--2" href="tel:${esc(TEL)}">Ligar</a>` : '',
+  ].filter(Boolean).join('')}</p>
+ </div>
  ${TEL ? '<p class="micro">(chamada para a rede móvel nacional)</p>' : ''}`}
 </section>
 
@@ -367,6 +377,10 @@ ${(TEL || WA) ? `<div class="accao">${[
   TEL ? `<a href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : '',
   WA ? `<a href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp</a>` : '',
 ].filter(Boolean).join('')}</div>` : ''}
+
+<button class="subir" type="button" hidden>
+ <span class="rl">Voltar ao topo da página</span><span aria-hidden="true">↑</span>
+</button>
 
 <script src="assets/portfolio.js" defer></script>
 </body>
@@ -421,6 +435,8 @@ for (const m of gerado.matchAll(/(tel:|wa\.me\/|mailto:)([^"'<\s]*)/g)) {
   if (!semDados.toLowerCase().includes(extenso(N))) aviso(`o número de trabalhos (${extenso(N)}) não aparece por extenso no HTML`)
 }
 
+if (!trabalhos.length) falha('todos os trabalhos estão com visivel:false — a página ficaria vazia')
+if (escondidos) console.log(`\n  ${escondidos} ${escondidos === 1 ? 'trabalho escondido' : 'trabalhos escondidos'} (visivel:false) — não contam para nada`)
 console.log(`\n  ${N} trabalhos · ${porConcelho.size} concelhos · ${nDominio} com .pt · ${nBackoffice} com backoffice`)
 console.log(`  sectores: ${sectoresOrd.map(([, v]) => `${v.nome} ${v.n}`).join(' · ')}`)
 console.log(`  censo:    ${famOrd.map(([f, ts]) => `${f} ${ts.length}`).join(' · ')}`)

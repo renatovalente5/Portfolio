@@ -45,6 +45,9 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   em vez do domínio final do cliente levam a etiqueta dentro da barra de endereço da
   moldura, ao lado do endereço. É uma coisa sobre o endereço, não sobre o trabalho.
   Deriva de `em_desenvolvimento` em `data/trabalhos.json`.
+- **Botão de subir** no canto inferior direito, que aparece depois de o herói sair do
+  ecrã. Sem ouvir o `scroll`: um `IntersectionObserver` sobre o herói, que já existe —
+  e nunca um sentinela em `vh`, que cresce quando alguém estica o ecrã.
 - **Nada escrito à mão.** O gerador tem uma auditoria com travões: se as contagens por
   sector não somarem, se uma cor de marca não der 4,5:1 contra o fundo, se um contacto
   no HTML não vier de `data/autor.json`, se as capturas tiverem mais de 120 dias, ou se
@@ -52,7 +55,9 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
 
 O telefone aparece em quatro sítios (cabeça fixa, herói, contacto, rodapé) e na barra
 fixa do telemóvel, ao lado do WhatsApp — e sai **sempre** de `data/autor.json`, nunca
-escrito à mão.
+escrito à mão. O botão da cabeça fixa vai para o **WhatsApp**, e diz-o: «WhatsApp
+925 110 570». Na secção de contacto o número aparece em tamanho grande e é ele próprio
+a ligação `tel:` — em corpo grande não precisa de uma palavra a dizer o que é.
 
 ---
 
@@ -73,6 +78,42 @@ assets/
   capturas/      ← 18 × (3 larguras desktop + 1 telemóvel), webp
   logos/         ← 18 logótipos originais dos clientes, redimensionados
 index.html            ← GERADO. Não editar.
+```
+
+## Backoffice — esconder e mostrar trabalhos
+
+O botão que interessa é o **«Mostrar na página»** de cada trabalho. Ao desligá-lo, o
+trabalho sai da grelha **e todos os números se recalculam sozinhos**: os contadores do
+topo, as contagens dos chips de sector, os concelhos do mapa e a lista de nomes. Nada
+na página é escrito à mão, por isso não há nada para ir corrigir.
+
+É o [Pages CMS](https://pagescms.org) (grátis, MIT, sem cartão), configurado em
+`.pages.yml`. Duas colecções: **Trabalhos** (`data/trabalhos.json`) e **Os meus
+contactos** (`data/autor.json`).
+
+**Activar, uma vez só:**
+1. Ir a [app.pagescms.org](https://app.pagescms.org) e entrar com o GitHub.
+2. Instalar a app do Pages CMS neste repositório (`renatovalente5/Portfolio`).
+3. Abrir o projecto — as duas colecções aparecem sozinhas, a partir do `.pages.yml`.
+
+Para dar acesso a outra pessoa sem conta de GitHub: convidar por email no painel do
+Pages CMS; entra por link mágico.
+
+**O que acontece ao gravar:** o CMS faz commit em `main` → o GitHub Actions corre
+`node _source/build.mjs`, escreve o `index.html` de volta ao repositório e publica.
+Demora 1 a 3 minutos. Se os dados ficarem inválidos (uma contagem que não soma, um
+concelho que não existe na CAOP, uma cor de marca sem 4,5:1), **o build falha e nada é
+publicado** — a página no ar continua a última que estava boa.
+
+**Duas armadilhas do Pages CMS, já resolvidas aqui:**
+- O CMS **apaga as chaves que não conhece** ao gravar. Por isso o `.pages.yml` declara
+  *todos* os campos que existem nos dados, mesmo os que já não aparecem na página
+  (`resumo`, `destaque`, `destaque_largo`, `nif`, `morada`). Ao acrescentar um campo aos
+  dados, acrescentá-lo também ao `.pages.yml`.
+- Como o CMS faz commit em `main`, antes de empurrar alterações locais correr sempre:
+
+```bash
+git fetch && git rebase origin/main
 ```
 
 ## Correr
@@ -117,10 +158,14 @@ node    _source/build.mjs
 `1-capturar.mjs` fecha sozinho os avisos de cookies (preferindo *rejeitar*) e, para
 sites multilingues, força o português antes de disparar — ver a constante `PREP`.
 
-`3-logos.py` **não redesenha nem recolore** a arte do cliente. Escolhe a variante do
-logótipo e resolve a cor da placa (tinta quase-preta ou branco) medindo, pixel a pixel,
-qual das duas perde menos arte e mantém o quartil inferior de contraste acima de 2,6:1;
-a logótipos de traço fino dá mais altura.
+`3-logos.py` **não redesenha nem recolore** a arte do cliente. A placa é **branca**, e
+o script procura, entre todas as variantes do logótipo, a que melhor se lê em branco —
+mede pixel a pixel. Só quando nenhuma sobrevive é que admite a placa em tinta escura, e
+isso acontece em dois dos dezoito, precisamente os que têm a arte literalmente branca
+(Gold Cleaning tem as letras a branco; o Feira Norte Auto é todo lima #AEFE05).
+Reconhece também fundos opacos: um PNG sem transparência é um logótipo sobre um fundo
+sólido, lido nos quatro cantos, e esses pixéis não contam como arte perdida. A logótipos
+de traço fino dá mais altura.
 
 ## Acrescentar um trabalho
 

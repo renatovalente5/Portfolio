@@ -209,6 +209,31 @@ if (grelha) {
   }
   addEventListener('hashchange', corrigirAterragem)
 
+  /* ── botão de subir ──────────────────────────────────────────────────────
+     Aparece depois de uma vista e meia de scroll. Sem listener de scroll: um
+     sentinela invisível no topo e um IntersectionObserver — o scroll é o evento
+     mais barato de ouvir mal.                                                  */
+  const subir = $('.subir')
+  const heroi = $('.cabeca')
+  if (subir && heroi && 'IntersectionObserver' in window) {
+    subir.hidden = false
+    // Observa-se o herói, que já existe. Não se injecta um sentinela de 150vh: uma
+    // altura em vh cresce quando alguém estica o ecrã (é o que faz o verificador ao
+    // capturar a página inteira) e passa a somar milhares de píxeis ao documento.
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) subir.removeAttribute('data-ver')
+      else subir.setAttribute('data-ver', '')
+    }, { threshold: 0 }).observe(heroi)
+    subir.addEventListener('click', () => {
+      const suave = !matchMedia('(prefers-reduced-motion:reduce)').matches
+      scrollTo({ top: 0, behavior: suave ? 'smooth' : 'auto' })
+      // devolver o foco ao início, senão o teclado fica onde estava
+      const primeiro = $('.topo .marca')
+      if (primeiro) primeiro.focus({ preventScroll: true })
+      history.replaceState(null, '', location.pathname)
+    })
+  }
+
   /* ── estado no URL, para o link por sector ser partilhável ──────────────── */
   const doHash = decodeURIComponent(location.hash.replace(/^#/, ''))
   if (doHash && chips.some(c => c.dataset.sector === doHash)) filtrar(doHash)

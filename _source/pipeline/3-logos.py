@@ -12,6 +12,7 @@ REPO = Path(__file__).resolve().parents[2]
 RAIZ = REPO.parent
 SC = Path(__file__).resolve().parents[2] / '_source/tmp'
 OUT = SC / 'logos-out'; FINAL = REPO / 'assets/logos'
+DADOS = REPO / '_source/dados/logos.json'   # é este que o build lê
 OUT.mkdir(exist_ok=True); FINAL.mkdir(parents=True, exist_ok=True)
 LIMITE = 1.55   # contraste mínimo para um pixel se considerar visível
 
@@ -57,11 +58,29 @@ def de_hex(s):
 
 # Só DUAS placas em toda a página: tinta quase-preta ou branco.
 # Duas tonalidades lêem-se como sistema; dezoito lêem-se como desarrumação.
-PLACAS = [(23, 25, 29), (255, 255, 255)]
-def rampa(marca): return PLACAS
+# Branco por omissão — foi o pedido. A tinta quase-preta só entra quando a arte do
+# cliente é literalmente branca e desaparece no branco (Gold Cleaning tem as letras a
+# branco; o Feira Norte Auto é todo lima #AEFE05). Não se redesenha arte de cliente.
+BRANCO = (255, 255, 255)
+ESCURO = (23, 25, 29)
+LIMITE_TROCA = 0.55   # acima desta perda em branco, procura-se o escuro
+def rampa(marca): return [BRANCO, ESCURO]
+
+def fundo_opaco(im):
+    """Um PNG/JPG sem transparência é um logótipo sobre um fundo sólido. O fundo lê-se
+    nos quatro cantos: se concordarem, os pixéis dessa cor são fundo, não arte. Sem isto
+    o branco do fundo do Marmovar conta como «arte perdida» numa placa branca, e a
+    métrica prefere a marca isolada ao logótipo completo."""
+    w, h = im.size; px = im.load()
+    cantos = [px[0, 0], px[w-1, 0], px[0, h-1], px[w-1, h-1]]
+    if any(c[3] < 250 for c in cantos): return None      # tem transparência: já se sabe o que é arte
+    base = cantos[0][:3]
+    if all(max(abs(c[i]-base[i]) for i in range(3)) <= 6 for c in cantos): return base
+    return None
 
 def pixeis(p):
     im = Image.open(p).convert('RGBA'); w, h = im.size; px = im.load()
+    bg = fundo_opaco(im)
     passo = max(1, int(math.sqrt(w*h/40000)))
     pts = []
     minx, miny, maxx, maxy = w, h, -1, -1
@@ -69,6 +88,7 @@ def pixeis(p):
         for x in range(0, w, passo):
             r, g, b, a = px[x, y]
             if a < 40: continue
+            if bg and max(abs(r-bg[0]), abs(g-bg[1]), abs(b-bg[2])) <= 10: continue   # é fundo
             pts.append((r, g, b, a/255))
             if x < minx: minx = x
             if y < miny: miny = y
@@ -116,21 +136,31 @@ dec = {}
 print(f'{"slug":22} {"ficheiro":26} {"placa":9} {"tinta":>6} {"rácio":>6}  forma  altura')
 print('─'*96)
 for slug, cands in CAND.items():
-    melhor = None
-    for c in cands:
-        p = RAIZ / c
-        if not p.exists(): continue
-        fontes = [(OUT/f'{slug}-{(t or "auto").strip("#")}.png', t) for t in SVG_TINTAS.get(slug, [None])] \
-                 if p.suffix == '.svg' else [(p, None)]
-        for f, tinta in fontes:
-            if p.suffix == '.svg': rasterizar(p, f, 320, tinta)
-            pts, rac, cob = pixeis(f)
-            if not pts: continue
-            escolha = min(((perda(pts, pl), pl) for pl in rampa(MARCA[slug])), key=lambda t: t[0])
-            m = dict(slug=slug, origem=str(p.relative_to(RAIZ)), render=str(f), tinta=tinta,
-                     racio=rac, cobertura=cob, perda=round(escolha[0], 4), placa=hx(escolha[1]))
-            if melhor is None or m['perda'] < melhor['perda'] - 0.004:
-                melhor = m
+    # Duas passagens. Primeiro procura-se, entre TODAS as variantes do logótipo, a que
+    # melhor se lê em BRANCO. Só se nenhuma sobreviver é que se admite a placa escura —
+    # e isso só acontece quando a arte do cliente é literalmente branca.
+    def avaliar (placa):
+        m_best = None
+        for c in cands:
+            p = RAIZ / c
+            if not p.exists(): continue
+            fontes = [(OUT/f'{slug}-{(t or "auto").strip("#")}.png', t) for t in SVG_TINTAS.get(slug, [None])] \
+                     if p.suffix == '.svg' else [(p, None)]
+            for f, tinta in fontes:
+                if p.suffix == '.svg': rasterizar(p, f, 320, tinta)
+                pts, rac, cob = pixeis(f)
+                if not pts: continue
+                m = dict(slug=slug, origem=str(p.relative_to(RAIZ)), render=str(f), tinta=tinta,
+                         racio=rac, cobertura=cob, perda=round(perda(pts, placa), 4), placa=hx(placa))
+                if m_best is None or m['perda'] < m_best['perda'] - 0.004:
+                    m_best = m
+        return m_best
+
+    melhor = avaliar(BRANCO)
+    if melhor is None or melhor['perda'] > LIMITE_TROCA:
+        alt = avaliar(ESCURO)
+        if alt is not None and (melhor is None or alt['perda'] < melhor['perda'] - 0.15):
+            melhor = alt
     if not melhor: print('SEM LOGO:', slug); continue
     fo, hl, hp = forma(melhor['racio'])
     # logótipos de traço fino desaparecem à altura nominal: dá-se-lhes mais corpo
@@ -160,6 +190,6 @@ for slug, d in dec.items():
     print(f'  {slug:22} {d["w_disp"]:3}×{d["h_disp"]:2} na placa {d["h_placa"]}px · {d["placa"]} · {d["bytes"]/1024:5.1f} KB')
 
 json.dump({k: {kk: vv for kk, vv in v.items() if kk != 'render'} for k, v in dec.items()},
-          open(OUT/'decisoes.json','w'), ensure_ascii=False, indent=1)
+          open(DADOS,'w'), ensure_ascii=False, indent=1)
 print(f'\n{len(dec)}/18 · {sum(d["bytes"] for d in dec.values())/1024:.1f} KB · '
       f'pior perda {max(d["perda"] for d in dec.values())*100:.1f}%')
