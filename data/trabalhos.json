@@ -17,13 +17,19 @@
   "marca": "#602601",
   "resumo": "Artigos personalizados para bebés, mamãs e papás: bodies, boxes de anúncio, aço gravado e têxtil.",
   "destaque": "Gerador próprio sem dependências e painel de edição: 53 páginas a partir de 18 artigos.",
-  "tech": ["HTML estático", "Gerador Node", "Pages CMS", "GitHub Actions"],
+  "tech": [
+   "HTML estático",
+   "Gerador Node",
+   "Pages CMS",
+   "GitHub Actions"
+  ],
   "backoffice": true,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "armazem-dos-pneus",
@@ -43,13 +49,20 @@
   "marca": "#FECB00",
   "resumo": "Venda e montagem de pneus novos e seminovos, jantes, baterias e serviços de oficina.",
   "destaque": "Loja online completa: carrinho, pagamento e recibo por email, sem servidor a pagar ao mês.",
-  "tech": ["HTML estático", "Pages CMS", "Cloudflare Worker", "Stripe", "Resend"],
+  "tech": [
+   "HTML estático",
+   "Pages CMS",
+   "Cloudflare Worker",
+   "Stripe",
+   "Resend"
+  ],
   "backoffice": true,
   "gerador": false,
   "loja": true,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "artstampcreations",
@@ -69,13 +82,19 @@
   "marca": "#1A8CE4",
   "resumo": "Estampagem e personalização de vestuário, canecas, ímans, vinil e lonas, para particulares e empresas.",
   "destaque": "As páginas são escritas em ficheiro todas as noites, para o Google as ler sem depender do JavaScript.",
-  "tech": ["HTML estático", "Pages CMS", "GitHub Actions", "Pré-render diário"],
+  "tech": [
+   "HTML estático",
+   "Pages CMS",
+   "GitHub Actions",
+   "Pré-render diário"
+  ],
   "backoffice": true,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "feira-norte-auto",
@@ -95,13 +114,18 @@
   "marca": "#AEFE05",
   "resumo": "Oficina de mecânica geral: revisões, diagnóstico, travões, suspensão, ar condicionado e pneus.",
   "destaque": "Cinco páginas, nenhuma biblioteca, e o mapa só carrega depois de o visitante aceitar.",
-  "tech": ["HTML estático", "CSS próprio", "JS sem dependências"],
+  "tech": [
+   "HTML estático",
+   "CSS próprio",
+   "JS sem dependências"
+  ],
   "backoffice": false,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "gold-cleaning",
@@ -121,13 +145,18 @@
   "marca": "#D4AF37",
   "resumo": "Limpeza para empresas e particulares: fim de obra, fachadas, telhados, vidros e painéis solares.",
   "destaque": "Sete comparadores antes/depois que se arrastam com o dedo, feitos sem uma linha de biblioteca.",
-  "tech": ["HTML estático", "CSS/JS sem dependências", "Fontes auto-alojadas"],
+  "tech": [
+   "HTML estático",
+   "CSS/JS sem dependências",
+   "Fontes auto-alojadas"
+  ],
   "backoffice": false,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "hn-transportes",
@@ -147,13 +176,18 @@
   "marca": "#E6A019",
   "resumo": "Transporte de mercadorias em carrinhas até 1.200 kg, expresso e dedicado, em Portugal e Espanha.",
   "destaque": "Site inteiro em três línguas — português, espanhol e inglês — sem página duplicada.",
-  "tech": ["HTML estático", "i18n PT/ES/EN no cliente", "Pillow (WebP)"],
+  "tech": [
+   "HTML estático",
+   "i18n PT/ES/EN no cliente",
+   "Pillow (WebP)"
+  ],
   "backoffice": false,
   "gerador": false,
   "loja": false,
   "linguas": 3,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "hv-limpezas",
@@ -173,13 +207,18 @@
   "marca": "#C9A961",
   "resumo": "Limpeza técnica de vidros, fachadas, painéis solares, softwash e higienização de estofos.",
   "destaque": "Doze serviços e uma galeria de vinte fotografias com ampliação, tudo sem bibliotecas.",
-  "tech": ["HTML estático", "CSS/JS sem dependências", "Fontes auto-alojadas"],
+  "tech": [
+   "HTML estático",
+   "CSS/JS sem dependências",
+   "Fontes auto-alojadas"
+  ],
   "backoffice": false,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "lr-motors",
@@ -199,13 +238,19 @@
   "marca": "#004AAD",
   "resumo": "Stand de carros, motos e todo-o-terreno usados, com oficina própria, garantia e retoma.",
   "destaque": "O stand tira as fotos com o telemóvel e a viatura aparece no site sozinha, sem passar por mim.",
-  "tech": ["Gerador Node", "Pages CMS", "Cloudflare Worker", "GitHub Actions"],
+  "tech": [
+   "Gerador Node",
+   "Pages CMS",
+   "Cloudflare Worker",
+   "GitHub Actions"
+  ],
   "backoffice": true,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "marmovar",
@@ -225,13 +270,19 @@
   "marca": "#C2A24C",
   "resumo": "Aplica granito, mármore, quartzo e quartzito em bancadas, casas de banho, revestimentos e pavimentos.",
   "destaque": "Onze páginas com as fotografias em formatos modernos, cortadas em vários tamanhos no momento da construção.",
-  "tech": ["Astro 5", "TypeScript", "sharp", "GitHub Actions"],
+  "tech": [
+   "Astro 5",
+   "TypeScript",
+   "sharp",
+   "GitHub Actions"
+  ],
   "backoffice": false,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "menta-conecta",
@@ -251,13 +302,18 @@
   "marca": "#17987A",
   "resumo": "Fardamentos, estampagem em roupa, gráfica rápida e brindes personalizados.",
   "destaque": "Dez produtos e catorze trabalhos que a empresa acrescenta e edita sozinha, sem tocar em código.",
-  "tech": ["HTML estático", "JS sem dependências", "Pages CMS"],
+  "tech": [
+   "HTML estático",
+   "JS sem dependências",
+   "Pages CMS"
+  ],
   "backoffice": true,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "newauto",
@@ -277,13 +333,19 @@
   "marca": "#EA3223",
   "resumo": "Stand de automóveis usados com quilometragem certificada e histórico verificado.",
   "destaque": "Uma página por viatura, gerada do zero, e uma verificação automática que impede publicar dados em falta.",
-  "tech": ["Gerador Node", "HTML estático", "Pages CMS", "GitHub Actions"],
+  "tech": [
+   "Gerador Node",
+   "HTML estático",
+   "Pages CMS",
+   "GitHub Actions"
+  ],
   "backoffice": true,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "pau-ferro-atelier",
@@ -303,13 +365,18 @@
   "marca": "#1E4B52",
   "resumo": "Fabrica mesas e móveis em madeira maciça com resina epóxi, por medida.",
   "destaque": "Vinte e seis peças em trinta e três páginas, com uma verificação que trava a publicação se faltar dados.",
-  "tech": ["Gerador Node", "HTML estático", "GitHub Actions"],
+  "tech": [
+   "Gerador Node",
+   "HTML estático",
+   "GitHub Actions"
+  ],
   "backoffice": false,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "perfect-finish",
@@ -329,13 +396,19 @@
   "marca": "#AC8A39",
   "resumo": "Estúdio de customização automóvel: tira mossas sem pintar, películas, PPF e detalhe.",
   "destaque": "Dezoito trabalhos e dez serviços que o estúdio publica sozinho a partir do telemóvel.",
-  "tech": ["HTML estático", "Gerador Node", "Pages CMS", "GitHub Actions"],
+  "tech": [
+   "HTML estático",
+   "Gerador Node",
+   "Pages CMS",
+   "GitHub Actions"
+  ],
   "backoffice": true,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "pokeauto",
@@ -355,13 +428,19 @@
   "marca": "#F5B921",
   "resumo": "Oficina multimarca: mecânica, electricidade, revisões e lavagens.",
   "destaque": "O conteúdo vem todo de ficheiros de dados e é escrito em HTML todas as noites, para o Google o ler.",
-  "tech": ["HTML estático", "JS sem dependências", "Pages CMS", "Pré-render diário"],
+  "tech": [
+   "HTML estático",
+   "JS sem dependências",
+   "Pages CMS",
+   "Pré-render diário"
+  ],
   "backoffice": true,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "praiometro",
@@ -381,14 +460,20 @@
   "marca": "#0E7490",
   "resumo": "Diz, numa nota de 0 a 100, se hoje vale a pena ir a cada uma das 1131 praias de Portugal.",
   "destaque": "1131 praias com dados de hora a hora, um modelo científico recalibrado, e funciona sem rede depois da primeira visita.",
-  "tech": ["Geradores Node e Python", "Service worker (PWA)", "Supabase", "Open-Meteo"],
+  "tech": [
+   "Geradores Node e Python",
+   "Service worker (PWA)",
+   "Supabase",
+   "Open-Meteo"
+  ],
   "backoffice": false,
   "gerador": true,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
   "ano": 2026,
-  "destaque_largo": true
+  "destaque_largo": true,
+  "em_desenvolvimento": false
  },
  {
   "id": "raf-matos",
@@ -408,13 +493,18 @@
   "marca": "#1B4C82",
   "resumo": "Remodelações e construção civil: pladur, tijoleira, pintura e telhados.",
   "destaque": "Seis comparadores antes/depois e um pedido de orçamento que abre já escrito no WhatsApp.",
-  "tech": ["HTML estático", "JS sem dependências", "Sem passo de construção"],
+  "tech": [
+   "HTML estático",
+   "JS sem dependências",
+   "Sem passo de construção"
+  ],
   "backoffice": false,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  },
  {
   "id": "spa-do-automovel-lux",
@@ -434,13 +524,18 @@
   "marca": "#C8924C",
   "resumo": "Estúdio de lavagem e detalhe automóvel: higienização, polimento e protecção cerâmica.",
   "destaque": "Seis comparadores antes/depois; o mapa só carrega depois de o visitante aceitar.",
-  "tech": ["HTML estático", "CSS", "JS sem dependências"],
+  "tech": [
+   "HTML estático",
+   "CSS",
+   "JS sem dependências"
+  ],
   "backoffice": false,
   "gerador": false,
   "loja": false,
   "linguas": 1,
   "dominio_proprio": false,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": true
  },
  {
   "id": "weldstaff",
@@ -460,12 +555,18 @@
   "marca": "#F59E0B",
   "resumo": "Cede soldadores, tubistas e serralheiros, e executa trabalhos de soldadura industrial.",
   "destaque": "Estava num servidor a pagar ao mês; passou a alojamento gratuito sem perder nada, em quatro línguas.",
-  "tech": ["Angular 21", "Pré-renderizado (SSG)", "Transloco i18n", "Cloudflare Worker"],
+  "tech": [
+   "Angular 21",
+   "Pré-renderizado (SSG)",
+   "Transloco i18n",
+   "Cloudflare Worker"
+  ],
   "backoffice": false,
   "gerador": true,
   "loja": false,
   "linguas": 4,
   "dominio_proprio": true,
-  "ano": 2026
+  "ano": 2026,
+  "em_desenvolvimento": false
  }
 ]

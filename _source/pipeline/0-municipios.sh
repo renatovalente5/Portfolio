@@ -1,18 +1,20 @@
 #!/bin/bash
 # Descarrega as geometrias oficiais dos 308 municípios de json.geoapi.pt (CAOP).
+# Alimenta o 4-geo.py, que desenha o mapa e escreve _source/dados/concelhos.json
+# (usado pelo build só para validar a grafia dos concelhos — não vai para a página).
 # Só é preciso correr outra vez se a Carta Administrativa mudar.
 set -euo pipefail
 cd "$(dirname "$0")/../tmp"
 mkdir -p muni
 curl -sfL "https://json.geoapi.pt/municipios?json=1" -o municipios.json
-python3 - <<'PY'
+python3 - <<'PY2'
 import json, urllib.parse
 nomes = json.load(open('municipios.json'))
 with open('muni_slugs.txt', 'w') as f:
     for n in nomes:
         f.write(n + "\t" + urllib.parse.quote(n) + "\n")
 print(len(nomes), "municípios listados")
-PY
+PY2
 : > falhas.txt
 n=0
 while IFS=$'\t' read -r nome enc; do

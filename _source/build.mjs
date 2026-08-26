@@ -21,7 +21,7 @@ const autor = ler('data/autor.json')
 const capturas = ler('_source/dados/capturas.json')
 const logos = ler('_source/dados/logos.json')
 const mapa = ler('_source/dados/mapa-continente.json')
-const concelhos = ler('data/concelhos.json')
+const concelhos = ler('_source/dados/concelhos.json')
 
 const erros = [], avisos = []
 const falha = m => erros.push(m)
@@ -78,13 +78,9 @@ const TEL = temContacto('telefone') ? String(autor.telefone) : null
 const TEL_TXT = TEL ? (autor.telefone_display || TEL) : null
 const WA = temContacto('whatsapp') ? String(autor.whatsapp) : null
 const MAIL = temContacto('email') ? String(autor.email) : null
-const PRECO = autor.preco_desde && !PLACEHOLDER.test(String(autor.preco_desde)) ? autor.preco_desde : null
-const PRAZO = autor.prazo_semanas && !PLACEHOLDER.test(String(autor.prazo_semanas)) ? autor.prazo_semanas : null
 if (!TEL) aviso('data/autor.json: telefone em falta — os botões de "Ligar" NÃO foram escritos no HTML')
-if (!WA) aviso('data/autor.json: whatsapp em falta — o botão de WhatsApp NÃO foi escrito')
-if (!MAIL) aviso('data/autor.json: email em falta — o contacto por email NÃO foi escrito')
-if (!PRECO || !PRAZO) aviso('data/autor.json: preco_desde/prazo_semanas em falta — o bloco "quanto custa" NÃO foi escrito')
-if (!autor.nif || !autor.morada) aviso('data/autor.json: nif/morada em falta — a identificação do DL 7/2004 fica incompleta')
+// NIF, morada, email e WhatsApp estão a null por decisão, não por esquecimento:
+// não se avisa por uma decisão, avisa-se por uma falta.
 const SEM_CONTACTO = !TEL && !WA && !MAIL
 
 // ── 3. NÚMEROS — todos calculados, nenhum escrito à mão ────────────────────
@@ -184,21 +180,20 @@ function pinturaDoConcelho (nome) {
   return { estilo: ` fill="url(#${id})" class="varios"` }
 }
 const svgSobreposto = `<svg class="mapa-cima" viewBox="0 0 ${VB[2]} ${VB[3]}" aria-hidden="true" focusable="false">
-<g class="conc">${destaquePaths.map(c => {
-  const n = porConcelho.get(c.nome)
-  return `<path d="${c.d}" data-concelho="${slug(c.nome)}" data-n="${n}"${pinturaDoConcelho(c.nome).estilo}/>`
-}).join('')}</g>
-<g class="compasso" hidden>
- <circle class="arco" id="arco25" r="0" cx="-999" cy="-999"/>
- <circle class="arco" id="arco50" r="0" cx="-999" cy="-999"/>
- <line class="guia" x1="-999" y1="-999" x2="-999" y2="-999"/>
- <g class="eu" transform="translate(-999,-999)"><circle r="7"/><path d="M-11 0h22M0 -11v22"/></g>
-</g>
+<g class="conc">${destaquePaths.map(c =>
+  `<path d="${c.d}" data-concelho="${slug(c.nome)}" data-n="${porConcelho.get(c.nome)}"${pinturaDoConcelho(c.nome).estilo}/>`).join('')}</g>
 <defs>__GRAD__</defs></svg>`
 
 // ── 7. FICHAS ──────────────────────────────────────────────────────────────
 const BASE_CAP = 'assets/capturas'
-function ficha (t, i) {
+// Os sites que ainda estão no github do Renato em vez do domínio final do cliente.
+const ETIQUETA_DEV = 'Em desenvolvimento'
+const nDev = trabalhos.filter(t => t.em_desenvolvimento).length
+for (const t of trabalhos) {
+  if (t.em_desenvolvimento && t.dominio_proprio)
+    aviso(`${t.id}: marcado em desenvolvimento mas já tem domínio próprio — confirmar`)
+}
+function ficha (t) {
   const cap = capturas[t.id]
   const lg = logos[t.id]
   const largo = t.destaque_largo ? ' ficha--largo' : ''
@@ -206,18 +201,20 @@ function ficha (t, i) {
   const srcset = cap.desktop.map(([w]) => `${src(w)} ${w}w`).join(', ')
   const tel = cap.telefone.length ? `${BASE_CAP}/${t.id}-t${cap.telefone[0][0]}.webp` : null
   const telH = tel ? Math.round(cap.telefone[0][0] / cap.racio_telefone) : 0
-  const onde = t.concelho ? `${esc(t.localidade)}${t.localidade !== t.concelho ? ', ' + esc(t.concelho) : ''}` : esc(t.localidade)
+  // Duas, no máximo, e só quando são verdade. São dados, não prosa: dizem o que o
+  // site faz pelo negócio, sem falar de preço nem de alojamento.
   const etiquetas = []
-  if (t.dominio_proprio) etiquetas.push('domínio próprio')
-  if (t.backoffice) etiquetas.push('edita sozinho')
-  if (t.loja) etiquetas.push('loja online')
-  if ((t.linguas || 1) > 1) etiquetas.push(`${t.linguas} línguas`)
+  if (t.loja) etiquetas.push('Loja online')
+  if (t.backoffice) etiquetas.push('Edita sozinho')
+  const onde = t.concelho ? `${esc(t.localidade)}${t.localidade !== t.concelho ? ', ' + esc(t.concelho) : ''}` : esc(t.localidade)
   return `<article class="ficha${largo}" data-id="${t.id}" data-sector="${t.sector}"` +
-    (t.concelho ? ` data-concelho="${slug(t.concelho)}" data-lat="${t.lat}" data-lon="${t.lon}"` : ' data-concelho=""') +
+    ` data-concelho="${t.concelho ? slug(t.concelho) : ''}"` +
     ` style="--m:${t.marca};--mc:${t.marca_claro};--me:${t.marca_escuro}">
  <span class="filete"></span>
  <div class="visor">
-  <span class="moldura" aria-hidden="true"><i></i><i></i><i></i><b>${esc(t.endereco)}</b></span>
+  <span class="moldura"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i>
+   <b aria-hidden="true">${esc(t.endereco)}</b>${t.em_desenvolvimento
+     ? `<em>${esc(ETIQUETA_DEV)}</em>` : ''}</span>
   <img class="ecra" src="${src(720)}" srcset="${srcset}"
        sizes="(min-width:1080px) 31vw,(min-width:620px) 46vw,92vw"
        width="1440" height="900" loading="lazy" decoding="async"
@@ -227,13 +224,9 @@ function ficha (t, i) {
    <img src="assets/logos/${t.id}.webp" width="${lg.w_disp}" height="${lg.h_disp}" loading="lazy" decoding="async" alt="">
   </span>
  </div>
- <p class="num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</p>
  <h3><a href="${t.url}" target="_blank" rel="noopener">${esc(t.nome)}<span class="rl"> — abre o site noutro separador</span></a></h3>
- <p class="meta">${esc(t.actividade)} · ${onde}<span class="km" hidden></span>${
-   t.tema === 'escuro' ? '<span class="escuro" title="site de tema escuro" aria-hidden="true"></span>' : ''}</p>
- <p class="resumo">${esc(t.resumo)}</p>
- <p class="destaque"><span aria-hidden="true">↳</span> ${esc(t.destaque)}</p>
- ${etiquetas.length ? `<ul class="etiq">${etiquetas.map(e => `<li>${esc(e)}</li>`).join('')}</ul>` : ''}
+ <p class="meta">${esc(t.actividade)} · ${onde}</p>
+ ${etiquetas.length ? `<p class="etiquetas">${etiquetas.map(e => `<span>${esc(e)}</span>`).join('')}</p>` : ''}
  <p class="cta" aria-hidden="true">Ver o site <span>↗</span></p>
 </article>`
 }
@@ -243,71 +236,17 @@ const fita = ordenados.map(t =>
   `<i data-id="${t.id}" style="--m:${t.marca_banda}"></i>`).join('')
 
 const contadores = [
-  [N, 'sites no ar'],
+  [N, N === 1 ? 'trabalho' : 'trabalhos'],
   [porConcelho.size, porConcelho.size === 1 ? 'concelho' : 'concelhos'],
-  [nDominio, 'com domínio .pt próprio'],
-  [nBackoffice, 'que o cliente edita sozinho'],
 ].map(([n, t]) => `<div><b>${n}</b><span>${esc(t)}</span></div>`).join('')
 
-const chips = `<button type="button" class="chip" aria-pressed="true" data-sector="">Todos <b>${N}</b></button>` +
+const chips = `<button type="button" class="chip" aria-pressed="true" data-sector="" data-nome="">Todos <b>${N}</b></button>` +
   sectoresOrd.map(([s, v]) =>
-    `<button type="button" class="chip" aria-pressed="false" data-sector="${s}">${esc(v.nome)} <b>${v.n}</b></button>`).join('')
+    `<button type="button" class="chip" aria-pressed="false" data-sector="${s}" data-nome="${esc(v.nome)}">${esc(v.nome)} <b>${v.n}</b></button>`).join('')
 
-// Os concelhos são o segundo eixo de filtro. Ficam ao lado dos sectores, em vez de
-// uma lista de doze linhas de 46px que empurrava o mapa 550px para baixo no telemóvel.
-const chipsConcelho = concelhosOrd.map(([nome, n]) =>
-  `<button type="button" class="chip chip--c" aria-pressed="false" data-concelho="${slug(nome)}" data-n="${n}">` +
-  `${esc(nome)} <b>${n}</b><span class="cd" hidden></span></button>`).join('')
-
-// censo: frase gerada, incluindo o "nove das dezoito" que ninguém escreve à mão
-const censoFrase = (() => {
-  const partes = famOrd.map(([f, ts], i) => {
-    const q = ts.length
-    const nome = { ouro: 'ouro ou âmbar', lima: 'verde-lima', azul: 'azul', verde: 'verde',
-                   vermelho: 'vermelho', castanho: 'castanho', turquesa: 'turquesa',
-                   laranja: 'laranja', violeta: 'violeta', rosa: 'rosa', neutro: 'cinzento' }[f] || f
-    return { q, nome, primeiro: i === 0 }
-  })
-  const p0 = partes[0]
-  let s = `<b>${maiuscula(extenso(p0.q, true))}</b> das ${extenso(N, true)} marcas destes negócios escolheram ${p0.nome}.`
-  const resto = partes.slice(1)
-  if (resto.length === 1) {
-    s += ` As outras ${extenso(resto[0].q, true)} escolheram ${resto[0].nome}.`
-  } else if (resto.length > 1) {
-    const grandes = resto.filter(p => p.q > 1)
-    const unicos = resto.filter(p => p.q === 1)
-    if (grandes.length) s += ' ' + grandes.map((p, i) => `${i ? extenso(p.q, true) : maiuscula(extenso(p.q, true))} escolheram ${p.nome}`).join(' e ') + '.'
-    if (unicos.length) {
-      const soma = unicos.length
-      s += ` As outras ${extenso(soma, true)} ${soma === 1 ? 'reparte-se' : 'repartem-se'} por ` +
-        unicos.map(p => p.nome).sort((a, b) => a.localeCompare(b, 'pt')).join(', ').replace(/, ([^,]*)$/, ' e $1') + '.'
-    }
-  }
-  s += ` <b>${maiuscula(extenso(nEscuro, false))}</b> destes sites são de tema escuro; <b>${extenso(nClaro, false)}</b>, de tema claro.`
-  return s
-})()
-
-const censoFita = [...trabalhos].sort((a, b) => a.matiz - b.matiz)
-  .map(t => `<i style="--m:${t.marca}" title="${esc(t.nome)} · ${t.marca}"></i>`).join('')
-
-const censoTabela = [...trabalhos].sort((a, b) => a.matiz - b.matiz).map(t =>
-  `<tr><th scope="row">${esc(t.nome)}</th><td><span class="am" style="--m:${t.marca}"></span><code>${t.marca}</code></td>` +
-  `<td>${t.matiz}°</td><td>${esc(t.familia)}</td></tr>`).join('')
-
-// «Para quem é da área»: números reais, agrupados
-const tech = new Map()
-for (const t of trabalhos) for (const x of (t.tech || [])) tech.set(x, (tech.get(x) || 0) + 1)
-
-const metodo = [
-  [`Carrega depressa, mesmo com rede fraca.`,
-   `Nenhum destes ${extenso(N)} sites usa WordPress nem plugins. São páginas escritas em ficheiro, servidas directamente — não há base de dados a consultar nem tema a montar a cada visita.`],
-  [`Você edita sozinho.`,
-   `${maiuscula(extenso(nBackoffice))} dos ${extenso(N)} têm um painel onde o dono muda preços, fotografias e viaturas a partir do telemóvel, sem me pagar por cada alteração.`],
-  [`Sem mensalidades de plataforma.`,
-   `O alojamento é gratuito e o domínio fica no nome do cliente. ${maiuscula(extenso(nDominio))} já têm <code>.pt</code> próprio.`],
-  [`A parte legal tratada.`,
-   `RGPD, Livro de Reclamações electrónico, identificação do prestador e informação de custo de chamada. Onde há mapa do Google, só carrega depois de o visitante aceitar.`],
-].map(([t, c]) => `<div class="passo"><h3>${t}</h3><p>${c}</p></div>`).join('')
+// Os concelhos deixaram de ser filtro: é uma legenda do mapa e mais nada.
+const listaConcelhos = concelhosOrd.map(([nome, n]) =>
+  `<li><span class="cn">${esc(nome)}</span>${n > 1 ? `<b>${n}</b>` : ''}</li>`).join('')
 
 // ── 9. HTML ────────────────────────────────────────────────────────────────
 const hoje = new Date()
@@ -327,7 +266,7 @@ if (MAIL) botoes.push(`<a class="b b--${botoes.length ? 2 : 1}" href="mailto:${e
 if (!botoes.length) botoes.push(`<a class="b b--1" href="#trabalhos">Ver os ${extenso(N)} trabalhos</a>`)
 
 const TITULO = `Renato Valente — sites para empresas portuguesas`
-const DESC = `${maiuscula(extenso(N))} sites no ar, em ${extenso(porConcelho.size)} concelhos: oficinas, stands, limpezas, construção e personalização. Rápidos, legais, e o cliente edita sozinho.`
+const DESC = `${maiuscula(extenso(N))} sites para empresas portuguesas, em ${extenso(porConcelho.size)} concelhos. Renato Valente${TEL ? ` — ${TEL_TXT}` : ''}.`
 
 const html = `<!doctype html>
 <html lang="pt-PT">
@@ -350,14 +289,13 @@ const html = `<!doctype html>
 <link rel="stylesheet" href="assets/portfolio.css">
 </head>
 <body>
-<a class="salto" href="#trabalhos">Saltar para os ${extenso(N)} trabalhos</a>
+<a class="salto" href="#trabalhos">Saltar para os trabalhos</a>
 
 <header class="topo">
  <a class="marca" href="#top"><b>Renato Valente</b></a>
  <nav aria-label="Secções">
-  <a href="#onde">Onde</a><a href="#trabalhos">Trabalhos</a><a href="#metodo">Como trabalho</a><a href="#contacto">Contacto</a>
+  <a href="#trabalhos">Trabalhos</a><a href="#onde">Onde</a><a href="#contacto">Contacto</a>
  </nav>
- <p class="topo-n"><b>${N}</b> no ar</p>
  ${TEL ? `<a class="topo-tel" href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : ''}
 </header>
 <div class="fita" id="fita" aria-hidden="true">${fita}</div>
@@ -365,124 +303,54 @@ const html = `<!doctype html>
 <main id="top">
 
 <section class="cabeca">
- <p class="kicker">Portefólio · ${hoje.getFullYear()} · sites para empresas portuguesas</p>
- <h1>Faço sites para empresas portuguesas.<br><em>${maiuscula(extenso(N))} estão no ar.</em></h1>
- <p class="lead">Desenho, construo e ponho no ar — do primeiro esboço ao domínio. Carregam depressa, funcionam no telemóvel e não pagam mensalidades de plataforma.</p>
+ <h1>Faço sites para empresas portuguesas.<br><em>${maiuscula(extenso(N))}, até agora.</em></h1>
  <div class="contadores">${contadores}</div>
  <p class="botoes">${botoes.join('')}</p>
  ${TEL ? '<p class="micro">(chamada para a rede móvel nacional)</p>' : ''}
- <p class="charneira"><a href="#onde">Diga-me onde fica o seu negócio e eu digo-lhe quais destes ${extenso(N)} ficam mais perto <span aria-hidden="true">↓</span></a></p>
 </section>
 
 <section id="onde" class="onde">
  <div class="onde-txt">
-  <p class="kicker">O compasso</p>
-  <h2>Onde fica o seu negócio?</h2>
-  <p class="lead">Escreva o seu concelho. A página mede a distância a cada um dos ${extenso(N)} trabalhos e reordena-os, do mais perto para o mais longe.</p>
-  <form id="compasso" novalidate>
-   <label for="concelho">O seu concelho</label>
-   <span class="campo">
-    <input id="concelho" name="concelho" list="l-concelhos" autocomplete="off" spellcheck="false"
-           enterkeyhint="done" inputmode="text" placeholder="por exemplo, Ovar">
-    <datalist id="l-concelhos"></datalist>
-   </span>
-   <button type="submit">Medir</button>
-   <button type="button" id="limpar" hidden>Limpar</button>
-  </form>
-  <p id="medida" role="status" aria-live="polite"></p>
-  <noscript><p class="nota">A medição precisa de JavaScript. A lista completa dos ${extenso(N)} trabalhos está logo abaixo, do norte para o sul.</p></noscript>
-  <p class="onde-nota">As distâncias são medidas entre os centros dos concelhos, em linha recta.</p>
+  <h2>Onde estão</h2>
+  <ul class="conc-lista">${listaConcelhos}</ul>
  </div>
  <figure class="mapa">
   <div class="mapa-caixa">
    <img src="assets/mapa.svg" width="${VB[2]}" height="${VB[3]}" loading="lazy" decoding="async"
-        alt="Mapa administrativo de Portugal continental com os ${extenso(porConcelho.size)} concelhos onde há trabalhos assinalados: ${concelhosOrd.map(([n, q]) => `${n} (${q})`).join(', ')}.">
+        alt="Mapa de Portugal continental com os ${extenso(porConcelho.size)} concelhos onde há trabalhos assinalados: ${concelhosOrd.map(([n, q]) => q > 1 ? `${n} (${q})` : n).join(', ')}.">
    ${svgSobreposto}
   </div>
-  <figcaption>Portugal continental, ${mapa.concelhos.length} concelhos. Assinalados, os ${extenso(porConcelho.size)} onde há trabalho feito — em faixas, quando há mais do que um. Fronteiras da Carta Administrativa Oficial de Portugal.</figcaption>
  </figure>
 </section>
 
 <section id="trabalhos" class="trabalhos">
  <div class="controlos">
-  <h2>Os ${extenso(N)} trabalhos</h2>
+  <h2>Trabalhos</h2>
   <div class="chips" role="group" aria-label="Filtrar por sector">${chips}</div>
-  <div class="chips chips--2" id="legenda" role="group" aria-label="Filtrar por concelho">${chipsConcelho}</div>
-  <p class="resultado" id="resultado" aria-live="polite"><b>${N}</b> trabalhos, do norte para o sul</p>
+  <p class="resultado" id="resultado" aria-live="polite">${N} trabalhos</p>
  </div>
  <div class="grelha" id="grelha">${ordenados.map(ficha).join('\n')}</div>
  <p class="vazio" id="vazio" hidden></p>
 </section>
 
-<section id="metodo" class="metodo">
- <p class="kicker">Como trabalho</p>
- <h2>Quatro coisas que ficam sempre feitas</h2>
- <div class="passos">${metodo}</div>
- ${PRECO && PRAZO ? `<p class="preco"><b>Quanto custa e quanto demora</b> — a partir de ${esc(PRECO)} e ${esc(PRAZO)} semanas, com o domínio e o primeiro ano incluídos.</p>` : ''}
-</section>
-
-<section id="area" class="area">
- <p class="kicker">Para quem é da área</p>
- <h2>O que está por baixo</h2>
- <div class="area-grade">
-  <dl>
-   <dt>Alojamento</dt><dd>${N}/${N} em GitHub Pages. Zero servidores, zero mensalidades.</dd>
-   <dt>Geradores próprios</dt><dd>${nGerador} sites construídos por gerador escrito para o efeito (Node e Python), sem dependências de runtime.</dd>
-   <dt>Backoffice</dt><dd>${nBackoffice} com Pages CMS: o cliente edita JSON e Markdown por interface, o commit dispara a reconstrução.</dd>
-   <dt>Multilingue</dt><dd>${nMulti}: ${trabalhos.filter(t => (t.linguas || 1) > 1).map(t => `${esc(t.nome)} (${t.linguas})`).join(', ')}.</dd>
-   <dt>Loja online</dt><dd>${nLoja}: Armazém dos Pneus, com Cloudflare Worker, Stripe, KV e Resend.</dd>
-   <dt>Frameworks</dt><dd>${N - trabalhos.filter(t => (t.tech || []).some(x => /Astro|Angular/.test(x))).length} dos ${N} sem framework. As excepções: Astro 5 (Marmovar) e Angular 21 pré-renderizado (WeldStaff).</dd>
-  </dl>
-  <div class="area-notas">
-   <h3>Três em detalhe</h3>
-   <p><b>Praiómetro</b> — 1131 praias, lagoas e piscinas naturais com previsão de hora a hora. Modelo HCI:Beach recalibrado para o Atlântico português, PWA com service worker, contas e favoritos em Supabase, dados do Open-Meteo. Bateria de testes de browser a correr no CI.</p>
-   <p><b>Armazém dos Pneus</b> — loja completa sobre alojamento estático: catálogo em JSON, carrinho no cliente, e um Cloudflare Worker a fazer o pagamento (Stripe), o email de confirmação (Resend) e o registo da encomenda (KV). Sem servidor a pagar ao mês.</p>
-   <p><b>WeldStaff</b> — migração de Angular em Docker num VPS para Angular 21 pré-renderizado no GitHub Pages: seis rotas em HTML servido, i18n em quatro línguas com Transloco, formulário validado por Worker. A conta do alojamento passou a zero.</p>
-  </div>
- </div>
-</section>
-
-<section class="censo">
- <p class="kicker">Censo cromático</p>
- <h2>As ${extenso(N, true)} cores</h2>
- <div class="censo-fita" aria-hidden="true">${censoFita}</div>
- <p class="censo-frase">${censoFrase}</p>
- <details>
-  <summary>Ver as ${extenso(N, true)} cores em tabela</summary>
-  <table><caption>Cor de marca de cada trabalho, por matiz crescente.</caption>
-   <thead><tr><th scope="col">Trabalho</th><th scope="col">Cor</th><th scope="col">Matiz</th><th scope="col">Família</th></tr></thead>
-   <tbody>${censoTabela}</tbody></table>
- </details>
-</section>
-
 <section id="contacto" class="contacto">
  <h2>Falar comigo</h2>
- ${SEM_CONTACTO
-   ? `<p class="lead">Os contactos ainda não estão publicados nesta página.</p>`
-   : `<p class="lead">Diga-me o que faz e em que concelho, e eu digo-lhe o que dá para fazer.</p>
-      <p class="botoes">${botoes.join('')}</p>
-      ${TEL ? '<p class="micro">(chamada para a rede móvel nacional)</p>' : ''}`}
+ ${SEM_CONTACTO ? '' : `<p class="botoes">${botoes.join('')}</p>
+ ${TEL ? '<p class="micro">(chamada para a rede móvel nacional)</p>' : ''}`}
 </section>
 
 </main>
 
 <footer class="rodape">
- <div class="rod-1">
-  <p><b>Renato Valente</b>${autor.nif ? ` · NIF ${esc(autor.nif)}` : ''}${autor.morada ? ` · ${esc(autor.morada)}` : ''}</p>
-  ${MAIL ? `<p><a href="mailto:${esc(MAIL)}">${esc(MAIL)}</a></p>` : ''}
-  ${autor.github ? `<p><a href="${esc(autor.github)}" target="_blank" rel="noopener">${esc(autor.github.replace(/^https:\/\//, ''))}</a></p>` : ''}
- </div>
- <div class="rod-2">
-  <p>Capturas reais dos ${extenso(N)} sites em produção, tiradas a ${capturadoEm.split('-').reverse().join('/')}.</p>
-  <p>Sem cookies, sem rastreio, sem terceiros — nem o mapa é do Google: é desenhado aqui, a partir da Carta Administrativa Oficial de Portugal.</p>
-  <p>Composto em Schibsted Grotesk e IBM Plex Mono, ambas auto-alojadas. Página gerada a ${DATA_PT}.</p>
- </div>
+ <p><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}${
+   autor.github ? ` · <a href="${esc(autor.github)}" target="_blank" rel="noopener">${esc(autor.github.replace(/^https:\/\//, ''))}</a>` : ''}</p>
+ <p>Mapa: Carta Administrativa Oficial de Portugal, DGT.</p>
 </footer>
 
-${botoes.length && (TEL || WA) ? `<div class="accao">
- ${TEL ? `<a href="tel:${esc(TEL)}">Ligar</a>` : ''}
- ${WA ? `<a href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
-</div>` : ''}
+${(TEL || WA) ? `<div class="accao">${[
+  TEL ? `<a href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : '',
+  WA ? `<a href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp</a>` : '',
+].filter(Boolean).join('')}</div>` : ''}
 
 <script src="assets/portfolio.js" defer></script>
 </body>
@@ -495,10 +363,6 @@ const BASE = cname ? `https://${cname}` : 'https://renatovalente5.github.io/Port
 writeFileSync(join(RAIZ, 'index.html'),
   html.replaceAll('__BASE__', BASE).replace('__GRAD__', gradientes.join('')))
 
-// dados que o JS precisa em runtime, gerados aqui para não haver números à mão
-writeFileSync(join(RAIZ, 'data/trabalhos-min.json'), JSON.stringify(
-  ordenados.map(t => ({ id: t.id, nome: t.nome, concelho: t.concelho, localidade: t.localidade,
-                        lat: t.lat, lon: t.lon, sector: t.sector }))))
 
 // ── 10. AUDITORIA ──────────────────────────────────────────────────────────
 const tam = p => existsSync(join(RAIZ, p)) ? statSync(join(RAIZ, p)).size : 0
@@ -538,14 +402,13 @@ for (const m of gerado.matchAll(/(tel:|wa\.me\/|mailto:)([^"'<\s]*)/g)) {
   for (const m of semDados.matchAll(/\b(dezasseis|dezassete|dezoito|dezanove|vinte|vinte e um)\b/g)) {
     if (m[1] !== extenso(N)) falha(`número por extenso "${m[1]}" no HTML gerado, mas há ${N} trabalhos`)
   }
-  if (!semDados.includes(extenso(N))) aviso(`o número de trabalhos (${extenso(N)}) não aparece por extenso no HTML`)
+  if (!semDados.toLowerCase().includes(extenso(N))) aviso(`o número de trabalhos (${extenso(N)}) não aparece por extenso no HTML`)
 }
 
 console.log(`\n  ${N} trabalhos · ${porConcelho.size} concelhos · ${nDominio} com .pt · ${nBackoffice} com backoffice`)
 console.log(`  sectores: ${sectoresOrd.map(([, v]) => `${v.nome} ${v.n}`).join(' · ')}`)
 console.log(`  censo:    ${famOrd.map(([f, ts]) => `${f} ${ts.length}`).join(' · ')}`)
 console.log(`\n  index.html ${kb(htmlB)} · mapa.svg ${kb(mapaB)} · css ${kb(cssB)} · js ${kb(jsB)}`)
-console.log(`  concelhos.json ${kb(tam('data/concelhos.json'))} (só carregado quando o Compasso é usado)`)
 
 if (avisos.length) { console.log('\n  AVISOS'); for (const a of avisos) console.log('   • ' + a) }
 if (erros.length) {

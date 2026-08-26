@@ -70,8 +70,8 @@ for c in concelhos:
 # ── concelhos.json — só nome + coordenadas, compacto
 comp = sorted([[c['nome'], round(c['lat'], 3), round(c['lon'], 3)] for c in concelhos],
               key=lambda x: sem_acentos(x[0]))
-(REPO / 'data/concelhos.json').write_text(json.dumps(comp, ensure_ascii=False, separators=(',', ':')))
-print('concelhos.json:', (REPO / 'data/concelhos.json').stat().st_size, 'bytes')
+(REPO / '_source/dados/concelhos.json').write_text(json.dumps(comp, ensure_ascii=False, separators=(',', ':')))
+print('concelhos.json:', (REPO / '_source/dados/concelhos.json').stat().st_size, 'bytes')
 
 # ── projecção equirectangular centrada (continente)
 LON0, LAT_REF = -8.60, 39.6

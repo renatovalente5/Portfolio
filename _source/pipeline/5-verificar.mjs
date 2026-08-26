@@ -161,6 +161,9 @@ async function main () {
     }, S).catch(() => {})
     await sleep(900)
     const d = (await rpc(ws, 'Runtime.evaluate', { expression: DIAG, returnByValue: true }, S)).result.value
+    console.log(`\n── ${c.n}  (${c.w}px, ${c.tema})`)
+    console.log(`   altura ${d.altura}px · fichas ${d.fichas_visiveis}/${d.fichas} · imgs ${d.imgs} (sem dim: ${d.imgs_sem_dim})`)
+    console.log(`   fonte h1: ${d.fonte_h1}`)
     // Captura da página inteira. As fichas têm content-visibility:auto: ao esticar o
     // ecrã para a altura toda, os cartões ficam «em vista» mas ainda não pintados, e
     // as imagens lazy só então começam a ser pedidas. Sem forçar um percurso pela
@@ -182,9 +185,31 @@ async function main () {
         return imgs.filter(i => !i.complete || !i.naturalWidth).length
       })()`,
       awaitPromise: true, returnByValue: true,
-    }, S).then(r => { if (r.result.value) problemas.push(`${c.n}: ${r.result.value} imagens não carregaram`) })
-      .catch(e => problemas.push(`${c.n}: falhou a preparar a captura (${e.message})`))
+    }, S).then(
+      r => { if (r.result.value) problemas.push(`${c.n}: ${r.result.value} imagens não carregaram`) },
+      e => { problemas.push(`${c.n}: falhou a preparar a captura (${e.message})`) })
+    // esperado, e não deixado a correr: sem isto a linha «altura real» sai debaixo
+    // do caso seguinte e aponta para o sítio errado.
     await sleep(1600)
+    // Voltar a medir a altura REAL. Não serve `scrollHeight` com o ecrã já esticado —
+    // o ecrã define o mínimo e devolve sempre a altura estimada. Mede-se o fundo do
+    // último elemento, que é a altura do conteúdo e não a da janela.
+    const altura2 = Math.ceil((await rpc(ws, 'Runtime.evaluate', {
+      expression: `(() => {
+        let max = 0;
+        for (const el of document.body.children) {
+          const r = el.getBoundingClientRect();
+          if (getComputedStyle(el).position === 'fixed') continue;
+          max = Math.max(max, r.bottom + scrollY);
+        }
+        return max + parseFloat(getComputedStyle(document.body).paddingBottom || 0)
+      })()`, returnByValue: true }, S)).result.value)
+    if (altura2 > 0 && Math.abs(altura2 - alturaMax) > 8) {
+      await rpc(ws, 'Emulation.setDeviceMetricsOverride',
+        { width: c.w, height: Math.min(altura2, 16000), deviceScaleFactor: 1, mobile: !!c.mob }, S)
+      await sleep(500)
+      console.log(`   altura real ${altura2}px (estimada ${alturaMax}px)`)
+    }
     const shot = await rpc(ws, 'Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }, S)
     const png = Buffer.from(shot.data, 'base64')
     writeFileSync(join(OUT, `${c.n}.png`), png)
@@ -195,9 +220,6 @@ async function main () {
       console.log(`   ✗ ${planas.length} bandas sem conteúdo pintado (y=${planas.slice(0,4).join(', ')}…)`)
       problemas.push(`${c.n}: ${planas.length} bandas em branco na captura`)
     }
-    console.log(`\n── ${c.n}  (${c.w}px, ${c.tema})`)
-    console.log(`   altura ${d.altura}px · fichas ${d.fichas_visiveis}/${d.fichas} · imgs ${d.imgs} (sem dim: ${d.imgs_sem_dim})`)
-    console.log(`   fonte h1: ${d.fonte_h1}`)
     if (d.overflow > 1) { console.log(`   ✗ OVERFLOW HORIZONTAL: ${d.overflow}px`); problemas.push(`${c.n}: overflow ${d.overflow}px`) }
     if (d.transbordam.length) { console.log('   ✗ transbordam:'); d.transbordam.forEach(x => console.log('       ' + x)); problemas.push(`${c.n}: ${d.transbordam.length} elementos fora`) }
     if (d.alvos_pequenos.length) { console.log('   ⚠ alvos <24px:'); d.alvos_pequenos.forEach(x => console.log('       ' + x)); problemas.push(`${c.n}: ${d.alvos_pequenos.length} alvos pequenos`) }
