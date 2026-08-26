@@ -120,6 +120,15 @@ const ordenados = [...trabalhos].sort((a, b) => {
   return b.lat - a.lat || a.nome.localeCompare(b.nome, 'pt')
 })
 
+// O primeiro cartão de cada concelho, na ordem em que a grelha o desenha (norte→sul).
+// É o destino da âncora do nome na lista.
+const primeiroDoConcelho = new Map()
+for (const t of ordenados) {
+  if (!t.concelho) continue
+  const sl = slug(t.concelho)
+  if (!primeiroDoConcelho.has(sl)) primeiroDoConcelho.set(sl, t.id)
+}
+
 // ── 5. COR: para cada marca, a variante legível em cada um dos dois fundos ──
 for (const t of trabalhos) {
   t.marca_claro = ajustarPara(t.marca, PAPEL, 4.5)     // texto sobre papel
@@ -176,12 +185,14 @@ function pinturaDoConcelho (nome) {
   const paradas = ts.flatMap((t, i) =>
     [`<stop offset="${(i * passo).toFixed(2)}%" stop-color="${t.marca_banda}"/>`,
      `<stop offset="${((i + 1) * passo).toFixed(2)}%" stop-color="${t.marca_banda}"/>`]).join('')
-  gradientes.push(`<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">${paradas}</linearGradient>`)
-  return { estilo: ` fill="url(#${id})" class="varios"` }
+  gradientes.push(`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">${paradas}</linearGradient>`)
+  return { estilo: ` style="--m:url(#${id})" class="varios"` }
 }
 const svgSobreposto = `<svg class="mapa-cima" viewBox="0 0 ${VB[2]} ${VB[3]}" aria-hidden="true" focusable="false">
 <g class="conc">${destaquePaths.map(c =>
-  `<path d="${c.d}" data-concelho="${slug(c.nome)}" data-n="${porConcelho.get(c.nome)}"${pinturaDoConcelho(c.nome).estilo}/>`).join('')}</g>
+  `<path d="${c.d}" data-concelho="${slug(c.nome)}" data-nome="${esc(c.nome)}"` +
+  ` data-n="${porConcelho.get(c.nome)}" data-cx="${c.cx}" data-cy="${c.cy}"` +
+  `${pinturaDoConcelho(c.nome).estilo}/>`).join('')}</g>
 <defs>__GRAD__</defs></svg>`
 
 // ── 7. FICHAS ──────────────────────────────────────────────────────────────
@@ -205,9 +216,8 @@ function ficha (t) {
   // site faz pelo negócio, sem falar de preço nem de alojamento.
   const etiquetas = []
   if (t.loja) etiquetas.push('Loja online')
-  if (t.backoffice) etiquetas.push('Edita sozinho')
   const onde = t.concelho ? `${esc(t.localidade)}${t.localidade !== t.concelho ? ', ' + esc(t.concelho) : ''}` : esc(t.localidade)
-  return `<article class="ficha${largo}" data-id="${t.id}" data-sector="${t.sector}"` +
+  return `<article class="ficha${largo}" id="t-${t.id}" data-id="${t.id}" data-sector="${t.sector}"` +
     ` data-concelho="${t.concelho ? slug(t.concelho) : ''}"` +
     ` style="--m:${t.marca};--mc:${t.marca_claro};--me:${t.marca_escuro}">
  <span class="filete"></span>
@@ -245,8 +255,14 @@ const chips = `<button type="button" class="chip" aria-pressed="true" data-secto
     `<button type="button" class="chip" aria-pressed="false" data-sector="${s}" data-nome="${esc(v.nome)}">${esc(v.nome)} <b>${v.n}</b></button>`).join('')
 
 // Os concelhos deixaram de ser filtro: é uma legenda do mapa e mais nada.
-const listaConcelhos = concelhosOrd.map(([nome, n]) =>
-  `<li><span class="cn">${esc(nome)}</span>${n > 1 ? `<b>${n}</b>` : ''}</li>`).join('')
+const corDoConcelho = nome => localizados.filter(t => t.concelho === nome)
+  .sort((a, b) => a.matiz - b.matiz)[0]
+const listaConcelhos = concelhosOrd.map(([nome, n]) => {
+  const sl = slug(nome), c = corDoConcelho(nome)
+  return `<li data-concelho="${sl}" style="--mc:${c.marca_claro};--me:${c.marca_escuro}">` +
+    `<a class="cn" href="#t-${primeiroDoConcelho.get(sl)}">${esc(nome)}</a>` +
+    `${n > 1 ? `<b>${n}</b>` : ''}</li>`
+}).join('')
 
 // ── 9. HTML ────────────────────────────────────────────────────────────────
 const hoje = new Date()
@@ -316,7 +332,7 @@ const html = `<!doctype html>
  </div>
  <figure class="mapa">
   <div class="mapa-caixa">
-   <img src="assets/mapa.svg" width="${VB[2]}" height="${VB[3]}" loading="lazy" decoding="async"
+   <img src="assets/mapa.svg" width="${VB[2]}" height="${VB[3]}" loading="lazy" decoding="async" draggable="false"
         alt="Mapa de Portugal continental com os ${extenso(porConcelho.size)} concelhos onde há trabalhos assinalados: ${concelhosOrd.map(([n, q]) => q > 1 ? `${n} (${q})` : n).join(', ')}.">
    ${svgSobreposto}
   </div>

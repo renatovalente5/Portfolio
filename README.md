@@ -10,7 +10,7 @@ Página única com os sites feitos para empresas portuguesas. Alojada no GitHub 
 ## O que é
 
 Uma montra, não um argumento. O que a página tem é: dezoito capturas reais, um mapa
-que diz onde ficam, e um número de telefone. **533 palavras no total**, e quase todas
+que diz onde ficam, e um número de telefone. **520 palavras no total**, e quase todas
 são dados — nomes de clientes, endereços, actividades e localidades. De prosa há duas
 frases.
 
@@ -21,11 +21,24 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   Administrativa Oficial de Portugal (via `json.geoapi.pt`), projectados no build. Os
   12 concelhos com trabalho aparecem pintados com a cor da marca do cliente — e, onde
   há mais do que um trabalho no mesmo concelho, em faixas com as cores verdadeiras de
-  todos. Não é filtro nem pesquisa: é um desenho que acompanha a leitura (o concelho
-  do cartão que está a meio do ecrã ganha contorno) e desbota o que sai do filtro.
+  todos. **Não é filtro nem pesquisa.** Ao ponteiro, ganha o concelho cujo centróide
+  está mais perto do cursor — e não se testa se o ponto cai dentro de uma forma: no
+  aglomerado de Aveiro o polígono do vizinho grande envolve a mancha pequena, e apontar
+  a São João da Madeira (5×6 px de ecrã) devolveria Oliveira de Azeméis. O concelho
+  aceso cresce, o nome acende na lista, e clicar segue a mesma âncora do nome. Em toque
+  não há nada: o mapa ocupa ~85% da altura do ecrã e quase todo o arrasto para descer
+  começaria com o dedo lá dentro.
+- **Os doze nomes são âncoras** para o primeiro cartão de cada concelho, com a chegada
+  sinalizada em `:target`. É assim que quem usa teclado ou telemóvel chega ao mesmo
+  sítio: alvos de 45 px, e funcionam com o JS desligado. O salto é corrigido depois do
+  layout assentar, porque `content-visibility:auto` faz aterrar desviado à primeira.
+- **Traço com `paint-order: stroke fill`.** O traço é auréola exterior e não come a
+  mancha: São João da Madeira passa de 3,9×5,0 px para 5,0×6,1 px, legível **sem gesto
+  nenhum** — que é o único ganho que conta no telemóvel.
 - **Quarentena da cor.** A página não tem cor própria. A única cor da interface é
-  `--sinal`. Toda a outra cor pertence a um cliente e vive em três sítios de área
-  mínima: o filete de 3 px do cartão, a banda da fita e o concelho no mapa.
+  `--sinal`. Toda a outra cor pertence a um cliente e vive em quatro sítios de área
+  mínima: o filete de 3 px do cartão, a banda da fita, o concelho no mapa e o risco
+  sob o nome do concelho quando está aceso.
 - **Capturas reais.** Cada cartão mostra o site em desktop e em telemóvel, dentro de
   uma moldura de browser com o **endereço verdadeiro** — para o visitante ir verificar.
 - **«Em desenvolvimento».** Os sites que ainda estão em `renatovalente5.github.io/…`
@@ -38,7 +51,8 @@ chips, mapa, ordem dos trabalhos) sai de `data/*.json` através de `_source/buil
   um número por extenso contradisser o número real de trabalhos, o build falha.
 
 O telefone aparece em quatro sítios (cabeça fixa, herói, contacto, rodapé) e na barra
-fixa do telemóvel — e sai **sempre** de `data/autor.json`, nunca escrito à mão.
+fixa do telemóvel, ao lado do WhatsApp — e sai **sempre** de `data/autor.json`, nunca
+escrito à mão.
 
 ---
 
@@ -138,3 +152,17 @@ Está guardado no commit `b8a92e3`. Para o ver:
 ```bash
 git show b8a92e3:assets/portfolio.js
 ```
+
+## Duas armadilhas do mapa, para não voltarem
+
+**Uma declaração `fill` no CSS atropela sempre o atributo `fill="url(#gradiente)"`.**
+Os dois concelhos com vários trabalhos (Ovar e Santa Maria da Feira) pintam-se com um
+gradiente de faixas; quando o CSS declarava `fill:var(--m,…)` e o atributo trazia o
+`url()`, o CSS ganhava, o `var(--m)` não existia, e o `fill:inherit` de socorro herdava
+o **preto por omissão do SVG**. O gradiente passa pela própria custom property
+(`style="--m:url(#g-ovar)"`), e `fill:var(--m)` serve os dois casos sem excepção.
+
+**Um traço escuro num concelho pequeno não é destaque, é uma mancha preta.** O estado
+activo usava `stroke:var(--tinta);stroke-width:2.2` com o traço centrado: em São João
+da Madeira (5,7 unidades de largura) o contorno comia a mancha toda. Agora o traço é
+exterior (`paint-order`) e o destaque é geometria — a forma cresce.
