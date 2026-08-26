@@ -1,7 +1,8 @@
 /* Portefólio — Renato Valente
-   Duas funções, e mais nenhuma porta de estado:
-     filtrar(sector) — mostra/esconde fichas e actualiza chips, fita, mapa e contagem
-     activar(id)     — liga o scroll à fita e ao concelho no mapa
+   Três funções, e mais nenhuma porta de estado:
+     pintar()        — a fita, o mapa e a lista mostram o que está no ecrã
+     filtrar(sector) — mostra/esconde fichas e actualiza chips, contagem e o resto
+     apontar(alvo)   — o rato no mapa; alimenta pintar()
    Sem dependências, sem listeners de scroll, sem requestAnimationFrame. */
 'use strict'
 
@@ -16,6 +17,7 @@ if (grelha) {
   const concPaths = $$('.mapa-cima .conc path')
   const chips = $$('.chip')
   const elResultado = $('#resultado')
+  const itensLista = $$('.conc-lista li')
 
   const trabalhos = fichas.map(f => ({
     el: f,
@@ -23,6 +25,49 @@ if (grelha) {
     sector: f.dataset.sector,
     concelho: f.dataset.concelho || '',
   }))
+
+  /* ── o que está no ecrã ──────────────────────────────────────────────────
+     Uma só fonte de verdade para a fita, o mapa e a lista. Duas origens que se
+     sobrepõem: o scroll diz que FILA de cartões está visível (três no computador,
+     duas no tablet, uma no telemóvel) e o rato no mapa diz que CONCELHO se aponta.
+     O rato ganha enquanto estiver a apontar; quando sai, volta a valer o scroll. */
+  let porScroll = []      // ids dos cartões da fila visível
+  let porRato = null      // ids dos cartões do concelho apontado, ou null
+
+  function pintar () {
+    const ids = porRato ?? porScroll
+    const fora = ids.length === 0 && !porRato
+    // a fita: fora da grelha mostra as cores todas; dentro acende a fila
+    if (fita) {
+      fita.dataset.modo = fora ? 'todas' : 'fila'
+      for (const b of bandas) {
+        if (!fora && ids.includes(b.dataset.id)) b.setAttribute('data-aceso', '')
+        else b.removeAttribute('data-aceso')
+      }
+    }
+    // o mapa e a lista: os concelhos desses cartões
+    const conc = new Set(trabalhos.filter(t => ids.includes(t.id)).map(t => t.concelho).filter(Boolean))
+    for (const p of concPaths) {
+      if (conc.has(p.dataset.concelho)) p.setAttribute('data-activo', '')
+      else p.removeAttribute('data-activo')
+    }
+    for (const li of itensLista) {
+      if (conc.has(li.dataset.concelho)) li.setAttribute('data-activo', '')
+      else li.removeAttribute('data-activo')
+    }
+  }
+
+  if ('IntersectionObserver' in window) {
+    const vistos = new Set()
+    const io = new IntersectionObserver(ents => {
+      for (const e of ents) e.isIntersecting ? vistos.add(e.target) : vistos.delete(e.target)
+      // a faixa de observação tem 16% da altura do ecrã: os cartões de uma fila
+      // partilham o topo, por isso entram e saem juntos — é a fila, não um cartão.
+      porScroll = [...vistos].filter(el => !el.classList.contains('fora')).map(el => el.dataset.id)
+      pintar()
+    }, { rootMargin: '-42% 0px -42% 0px' })
+    for (const f of fichas) io.observe(f)
+  }
 
   /* ── filtrar por sector ─────────────────────────────────────────────────── */
   let sector = ''
@@ -54,6 +99,16 @@ if (grelha) {
       if (tem) p.removeAttribute('data-fora')
       else p.setAttribute('data-fora', '')
     }
+    // o que estava aceso pode ter saído do filtro
+    porScroll = porScroll.filter(id => {
+      const t = trabalhos.find(t => t.id === id)
+      return t && !t.el.classList.contains('fora')
+    })
+    if (porRato) porRato = porRato.filter(id => {
+      const t = trabalhos.find(t => t.id === id)
+      return t && !t.el.classList.contains('fora')
+    })
+    pintar()
     // O nome perde o destino quando não sobra cartão nenhum visível nesse concelho.
     // O contador <b> NÃO muda: continua a contar todos os trabalhos do concelho, e
     // mudá-lo faria o número mentir.
@@ -75,42 +130,6 @@ if (grelha) {
     })
   }
 
-  /* ── activar: o scroll acende a banda da fita e o concelho no mapa ──────── */
-  function activar (id) {
-    const t = trabalhos.find(t => t.id === id)
-    for (const b of bandas) {
-      if (b.dataset.id === id) b.setAttribute('data-activo', '')
-      else b.removeAttribute('data-activo')
-    }
-    for (const p of concPaths) {
-      if (t && p.dataset.concelho === t.concelho) {
-        if (!p.hasAttribute('data-activo')) {
-          p.setAttribute('data-activo', '')
-          // Em SVG não há z-index: quem manda é a ordem de pintura. Um concelho que
-          // cresce ficaria por baixo dos irmãos desenhados depois dele.
-          p.parentNode.appendChild(p)
-        }
-      } else p.removeAttribute('data-activo')
-    }
-  }
-
-  if ('IntersectionObserver' in window) {
-    const vistos = new Set()
-    const io = new IntersectionObserver(ents => {
-      for (const e of ents) e.isIntersecting ? vistos.add(e.target) : vistos.delete(e.target)
-      if (!vistos.size) return
-      const meio = innerHeight / 2
-      let melhor = null, d = Infinity
-      for (const el of vistos) {
-        const r = el.getBoundingClientRect()
-        const dd = Math.abs(r.top + r.height / 2 - meio)
-        if (dd < d) { d = dd; melhor = el }
-      }
-      if (melhor) activar(melhor.dataset.id)
-    }, { rootMargin: '-42% 0px -42% 0px' })
-    for (const f of fichas) io.observe(f)
-  }
-
   /* ── o mapa ao ponteiro ──────────────────────────────────────────────────
      O alvo NÃO é o <path>: São João da Madeira tem 5×6 px de ecrã e seis dos doze
      concelhos vivem num aglomerado de ~18 px. Ganha o concelho cujo centróide está
@@ -121,7 +140,6 @@ if (grelha) {
      arrasto para descer começaria com o dedo lá dentro. Quem não tem rato chega ao
      mesmo sítio pelas âncoras dos nomes, que são alvos de 45 px.                  */
   const caixa = $('.mapa-caixa')
-  const itensLista = $$('.conc-lista li')
   const fino = matchMedia('(hover:hover) and (pointer:fine)')
 
   if (caixa && concPaths.length && fino.matches) {
@@ -148,6 +166,11 @@ if (grelha) {
       }
       if (alvo) caixa.setAttribute('data-mostra', '')
       else caixa.removeAttribute('data-mostra')
+      // e a fita acende as bandas dos trabalhos desse concelho
+      porRato = alvo
+        ? trabalhos.filter(t => t.concelho === alvo.c && !t.el.classList.contains('fora')).map(t => t.id)
+        : null
+      pintar()
     }
 
     // O rect só se lê no início de cada movimento, e nunca depois de escrever

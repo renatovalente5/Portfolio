@@ -39,7 +39,9 @@ CAND = {
  'perfect-finish':['PerfectFinish/assets/img/marca/logotipo.svg'],
  'pokeauto':['PokeAuto/assets/img/logo-760.webp'],
  'praiometro':['Praiometro/assets/img/favicon.svg'],
- 'raf-matos':['RafMatos/assets/img/logo-full.png','RafMatos/assets/img/logo-wordmark.webp'],
+ # A casa, e só a casa: é uma decisão do Renato, não uma medição. O selector preferia
+ # o logótipo completo por perder menos arte, mas a escolha da peça não é dele.
+ 'raf-matos':['RafMatos/assets/img/logo-mark.png'],
  'spa-do-automovel-lux':['SpaDoAutomovelLUX/assets/img/logo-full.webp'],
  'weldstaff':['WeldStaff/src/assets/img/weldstaff_full_logo.png'],
 }

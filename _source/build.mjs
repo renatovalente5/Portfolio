@@ -319,7 +319,7 @@ const html = `<!doctype html>
  ${WA ? `<a class="topo-tel" href="https://wa.me/${esc(WA)}" target="_blank" rel="noopener">WhatsApp ${esc(TEL_TXT)}</a>`
        : (TEL ? `<a class="topo-tel" href="tel:${esc(TEL)}">Ligar ${esc(TEL_TXT)}</a>` : '')}
 </header>
-<div class="fita" id="fita" aria-hidden="true">${fita}</div>
+<div class="fita" id="fita" data-modo="todas" aria-hidden="true">${fita}</div>
 
 <main id="top">
 
@@ -368,8 +368,7 @@ const html = `<!doctype html>
 </main>
 
 <footer class="rodape">
- <p><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}${
-   autor.github ? ` · <a href="${esc(autor.github)}" target="_blank" rel="noopener">${esc(autor.github.replace(/^https:\/\//, ''))}</a>` : ''}</p>
+ <p><b>Renato Valente</b>${TEL ? ` · <a href="tel:${esc(TEL)}">${esc(TEL_TXT)}</a>` : ''}</p>
  <p>Mapa: Carta Administrativa Oficial de Portugal, DGT.</p>
 </footer>
 
